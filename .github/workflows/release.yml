@@ -36,8 +36,16 @@ jobs:
         run: |
           bun run build
           git diff --exit-code -- dist || (echo "::error::dist/ is stale: run bun run build and commit it" && exit 1)
-      - run: npm publish --provenance --access public
+      - name: Publish to npm
+        run: |
+          name="$(node -p 'require("./package.json").name')"
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already on npm; skipping publish"
+          else
+            npm publish --provenance --access public
+          fi
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
