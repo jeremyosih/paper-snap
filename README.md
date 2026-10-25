@@ -13,8 +13,8 @@ paper-snap https://example.com --out snap.html --json           # HTML only, JSO
 ## Install
 
 ```sh
-npm install -g github:jeremyosih/paper-snap
-npx skills add jeremyosih/paper-snap        # the agent skill
+npm install -g https://github.com/jeremyosih/paper-snap/tarball/main
+npx skills add jeremyosih/paper-snap --skill paper-snap -g   # the agent skill
 ```
 
 Requirements: Node 22+, the Paper app running (for pushing), and a Chromium-based browser. Installed Chrome, Edge, Brave and Chromium are found automatically; if none is installed, a headless Chromium is downloaded once.

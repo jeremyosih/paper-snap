@@ -12,4 +12,4 @@ Headless Paper Snapshot: an Effect v4 CLI that captures a page with the Paper Sn
 
 After cloning, run `bun install && bun run setup` (patches TypeScript with Effect diagnostics, installs git hooks).
 
-Run `bun run check` after changes: formatting, anti-slop lint, TypeScript with Effect diagnostics, and Knip. `dist/bin.mjs` is committed so `npm install -g github:jeremyosih/paper-snap` works without a build step: run `bun run build` and commit `dist/` with every source change. `bun run dev -- <args>` runs from source.
+Run `bun run check` after changes: formatting, anti-slop lint, TypeScript with Effect diagnostics, and Knip. `dist/bin.mjs` is committed so `npm install -g https://github.com/jeremyosih/paper-snap/tarball/main` works without a build step: run `bun run build` and commit `dist/` with every source change. `bun run dev -- <args>` runs from source.
