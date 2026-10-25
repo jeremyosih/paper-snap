@@ -13,7 +13,7 @@ description: Snapshot web UI into Paper as editable layers. Use when a URL, loca
    - URLs, public or localhost: `paper-snapshot <url> [<url or /path>…]`. It launches the installed Chrome headlessly.
    - A state that takes interaction to reach and that page-state flags (step 2) cannot set up: get a browser there, then capture its tab without a URL.
      - agent-browser: `paper-snapshot` (captures the tab agent-browser is on).
-     - The user's everyday Chrome, also what Chrome DevTools MCP drives with `--autoConnect`: `paper-snapshot --source chrome --tab <text in the tab's URL or title>`. This needs remote debugging enabled at `chrome://inspect/#remote-debugging`; the user clicks Allow when Chrome asks.
+     - The user's everyday Chrome, also what Chrome DevTools MCP drives with `--autoConnect`: `paper-snapshot --source chrome --tab <text in the tab's URL or title>`. The user must approve it in Chrome; see **Human checkpoints**.
      - Playwriter: `--source playwriter --tab <text>`. Any other CDP browser: `--cdp <endpoint>`.
 
 2. **Set up the state.** Sign-in: `--storage-state auth.json`, or `--cookie "name=value"`. Theme and flags that apps keep in storage: `--local-storage key=value` (`--color-scheme dark` alone only flips the media query). Menus and dialogs: `--click <selector>`, repeatable, in order. `--eval` covers anything else.
@@ -25,6 +25,15 @@ description: Snapshot web UI into Paper as editable layers. Use when a URL, loca
 5. **Run with `--json`.** Stdout carries one JSON line per artboard: `artboardId`, `fileId`, `x`, `y`, `width`, `height`, and `warnings`. A failed capture prints `{"index", "url", "error"}`, the batch continues, and the exit code is 1.
 
 6. **Verify.** Read each line's `warnings`; any non-zero count names what imported badly (`emptySvgs`, `unresolvedSprites`, `clippedScrollContainers`, `unresolvedImages`, `lostColspans`). Screenshot flagged artboards with the Paper MCP `get_screenshot`. Done when every artboard shows the intended state with zero warnings, or the remaining ones are explained.
+
+## Human checkpoints
+
+Tell the user before running a command that waits on them, and name what they will see.
+
+- **Chrome "Allow remote debugging?" dialog** (`--source chrome`, and auto without a URL when agent-browser is absent). One-time setup: the user turns on remote debugging at `chrome://inspect/#remote-debugging`; Chrome then shows "Server running at 127.0.0.1:9222". Every run opens a fresh connection, so Chrome shows "Allow remote debugging?" each time, on the machine where Chrome runs. The command blocks until the user clicks **Allow**, for up to `--chrome-approval-timeout` (2 min). **Cancel** fails the run. While attached, Chrome shows a "controlled by automated test software" banner. A batch asks once. On a remote machine, the person at that screen has to click.
+- **Paper app.** It must be running with a file open, or pass `--file-id`. Pushing needs no approval.
+- **agent-browser / Playwriter.** No prompt, but an agent-browser session must be open (`agent-browser open <url>`), or Playwriter's extension must be connected to its relay.
+- **First run.** paper-snapshot downloads the Paper Snapshot extension once (network required). Without an installed Chrome, Edge, Brave or Chromium it also downloads headless Chromium once.
 
 ## Gotchas
 

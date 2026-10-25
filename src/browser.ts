@@ -28,7 +28,13 @@ export type Source = Data.TaggedEnum<{
    * The user's everyday Chrome, after "Remote debugging" is enabled at
    * chrome://inspect/#remote-debugging (Chrome 144+). Chrome asks the user to allow each connection.
    */
-  Chrome: { readonly userDataDir: string };
+  Chrome: {
+    readonly userDataDir: string;
+    /** Used when DevToolsActivePort can't be read (sandboxed or remote callers). */
+    readonly port: number;
+    /** How long to wait for the user to click Allow. */
+    readonly approvalTimeout: Duration.Duration;
+  };
 }>;
 
 export const Source = Data.taggedEnum<Source>();
@@ -439,19 +445,22 @@ export const layer = Layer.effect(
     });
 
     /** Chrome publishes its debugging port and browser path in `<user data dir>/DevToolsActivePort`. */
-    const chromeEndpoint = Effect.fn("Browser.chromeEndpoint")(function* (userDataDir: string) {
+    const chromeEndpoint = Effect.fn("Browser.chromeEndpoint")(function* (
+      userDataDir: string,
+      fallbackPort: number,
+    ) {
       const file = path.join(userDataDir, "DevToolsActivePort");
+      const contents = yield* fs.readFileString(file).pipe(Effect.option);
 
-      const contents = yield* fs.readFileString(file).pipe(
-        Effect.mapError(
-          () =>
-            new BrowserError({
-              message: `Chrome remote debugging is off (no ${file}). Enable it at chrome://inspect/#remote-debugging`,
-            }),
-        ),
-      );
+      // macOS privacy rules hide Chrome's profile from some apps (and the file is absent when
+      // remote debugging is off). Chrome also accepts the browser endpoint without its id.
+      if (Option.isNone(contents)) {
+        yield* Effect.logDebug(`Can't read ${file}; trying 127.0.0.1:${fallbackPort}`);
 
-      const [port, browserPath] = contents.split("\n").map((line) => line.trim());
+        return `ws://127.0.0.1:${fallbackPort}/devtools/browser`;
+      }
+
+      const [port, browserPath] = contents.value.split("\n").map((line) => line.trim());
 
       if (
         port === undefined ||
@@ -474,13 +483,28 @@ export const layer = Layer.effect(
         Attach: ({ endpoint }) => attachedHandle(endpoint, endpoint, connectTimeout, Option.none()),
         Playwriter: ({ endpoint }) =>
           attachedHandle(endpoint, "playwriter", connectTimeout, Option.none()),
-        Chrome: ({ userDataDir }) =>
+        Chrome: ({ userDataDir, port, approvalTimeout }) =>
           Effect.gen(function* () {
-            const endpoint = yield* chromeEndpoint(userDataDir);
+            const endpoint = yield* chromeEndpoint(userDataDir, port);
 
-            yield* Effect.logInfo("Connecting to Chrome; click Allow if Chrome asks");
+            // A warning, so it shows under --quiet: nothing proceeds until the user answers.
+            yield* Effect.logWarning(
+              'Chrome is asking to "Allow remote debugging?" — click Allow in Chrome to continue',
+            );
 
-            return yield* attachedHandle(endpoint, "chrome", connectTimeout, Option.none());
+            return yield* attachedHandle(
+              endpoint,
+              "chrome",
+              Duration.max(connectTimeout, approvalTimeout),
+              Option.none(),
+            ).pipe(
+              Effect.mapError(
+                (error) =>
+                  new BrowserError({
+                    message: `Could not attach to Chrome (${error.message}). Turn on chrome://inspect/#remote-debugging, keep Chrome open, and click Allow when it asks; Cancel refuses the connection`,
+                  }),
+              ),
+            );
           }),
         AgentBrowser: (agentSource) =>
           Effect.gen(function* () {

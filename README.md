@@ -40,13 +40,13 @@ Requirements: Node 22+, the Paper app running (for pushing), and a Chromium-base
 
 | `--source`      | Page comes from                                                                                                         |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `chrome`        | Your everyday Chrome once `chrome://inspect/#remote-debugging` is on (Chrome 144+); Chrome asks you to Allow            |
+| `chrome`        | Your everyday Chrome once `chrome://inspect/#remote-debugging` is on (Chrome 144+); Chrome asks you to Allow each run   |
 | `launch`        | A headless installed Chrome (default when a URL is given)                                                               |
 | `agent-browser` | The tab [agent-browser](https://github.com/vercel-labs/agent-browser) is driving (default without a URL, then `chrome`) |
 | `playwriter`    | Your own Chrome via the [Playwriter](https://github.com/remorses/playwriter) extension                                  |
 | `cdp`           | Any Chrome DevTools Protocol endpoint (`--cdp`)                                                                         |
 
-Attaching lets an agent click, type and log in first, then capture exactly that state. Attached browsers are left running.
+Attaching lets an agent click, type and log in first, then capture exactly that state. Attached browsers are left running. With `--source chrome`, each run waits (up to `--chrome-approval-timeout`, 2 min) for you to click **Allow** in Chrome's "Allow remote debugging?" dialog; Cancel fails the run. When Chrome's `DevToolsActivePort` file can't be read (macOS may hide it from some apps), paper-snapshot connects to `127.0.0.1:9222` (`--chrome-port`).
 
 ## Batches and placement
 

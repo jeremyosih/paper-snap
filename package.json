@@ -1,6 +1,6 @@
 {
   "name": "paper-snapshot",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Headless Paper Snapshot: snapshot any URL or local dev server into Paper as editable layers",
   "keywords": [
     "agent",

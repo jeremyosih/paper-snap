@@ -3372,6 +3372,38 @@ const mapInput = /*#__PURE__*/ dual(2, (self, f) => make$35((b1, b2) => self(f(b
 * @since 4.0.0
 */
 const isGreaterThan$1 = (O) => dual(2, (self, that) => O(self, that) === 1);
+/**
+* Returns the maximum of two values according to the given order. If they are equal, returns the first argument.
+*
+* **When to use**
+*
+* Use when you need to select the larger of two values according to an
+* `Order`.
+*
+* **Details**
+*
+* Returns the value that compares as greater than or equal to the other value.
+* If values are equal, the first argument is returned.
+*
+* **Example** (Selecting the maximum value)
+*
+* ```ts import.meta.vitest
+* import { Order } from "effect"
+*
+* const maxNumber = Order.max(Order.Number)
+*
+* maxNumber(1, 2) // => 2
+* maxNumber(2, 1) // => 2
+* maxNumber(1, 1) // => 1
+* ```
+*
+* @see {@link min} for the minimum of two values
+* @see {@link clamp} to clamp a value between min and max
+* @stability stable
+* @category comparisons
+* @since 2.0.0
+*/
+const max$2 = (O) => dual(2, (self, that) => self === that || O(self, that) > -1 ? self : that);
 //#endregion
 //#region node_modules/effect/dist/Option.js
 /**
@@ -5907,6 +5939,41 @@ const matchPair = /*#__PURE__*/ dual(3, (self, that, options) => {
 	else return options.onNanos(self.value.nanos, toNanosUnsafe(that));
 });
 /**
+* Provides an `Order` instance for comparing `Duration` values.
+*
+* **Details**
+*
+* `NegativeInfinity` < any finite value < `Infinity`.
+*
+* **Example** (Sorting durations)
+*
+* ```ts import.meta.vitest
+* import { Duration } from "effect"
+*
+* const durations = [
+*   Duration.seconds(3),
+*   Duration.seconds(1),
+*   Duration.seconds(2)
+* ]
+* durations.sort((a, b) => Duration.Order(a, b)).map(Duration.toSeconds) // => [1, 2, 3]
+* ```
+*
+* @stability stable
+* @category instances
+* @since 2.0.0
+*/
+const Order$1 = /*#__PURE__*/ make$35((self, that) => matchPair(self, that, {
+	onMillis: (self, that) => self < that ? -1 : self > that ? 1 : 0,
+	onNanos: (self, that) => self < that ? -1 : self > that ? 1 : 0,
+	onInfinity: (self, that) => {
+		if (self.value._tag === that.value._tag) return 0;
+		if (self.value._tag === "Infinity") return 1;
+		if (self.value._tag === "NegativeInfinity") return -1;
+		if (that.value._tag === "Infinity") return -1;
+		return 1;
+	}
+}));
+/**
 * Provides an `Equivalence` instance for comparing `Duration` values.
 *
 * **Example** (Comparing durations for equivalence)
@@ -5926,6 +5993,22 @@ const Equivalence$3 = (self, that) => matchPair(self, that, {
 	onNanos: (self, that) => self === that,
 	onInfinity: (self, that) => self.value._tag === that.value._tag
 });
+/**
+* Returns the larger of two Durations.
+*
+* **Example** (Selecting the longer duration)
+*
+* ```ts import.meta.vitest
+* import { Duration } from "effect"
+*
+* Duration.max(Duration.seconds(5), Duration.seconds(3)) // => Duration.seconds(5)
+* ```
+*
+* @stability stable
+* @category ordering
+* @since 2.0.0
+*/
+const max$1 = /*#__PURE__*/ max$2(Order$1);
 /**
 * Checks whether two Durations are equal.
 *
@@ -36610,9 +36693,14 @@ const layer$2 = effect(Service$2, gen(function* () {
 		};
 	});
 	/** Chrome publishes its debugging port and browser path in `<user data dir>/DevToolsActivePort`. */
-	const chromeEndpoint = fn("Browser.chromeEndpoint")(function* (userDataDir) {
+	const chromeEndpoint = fn("Browser.chromeEndpoint")(function* (userDataDir, fallbackPort) {
 		const file = path.join(userDataDir, "DevToolsActivePort");
-		const [port, browserPath] = (yield* fs.readFileString(file).pipe(mapError(() => new BrowserError({ message: `Chrome remote debugging is off (no ${file}). Enable it at chrome://inspect/#remote-debugging` })))).split("\n").map((line) => line.trim());
+		const contents = yield* fs.readFileString(file).pipe(option$1);
+		if (isNone(contents)) {
+			yield* logDebug(`Can't read ${file}; trying 127.0.0.1:${fallbackPort}`);
+			return `ws://127.0.0.1:${fallbackPort}/devtools/browser`;
+		}
+		const [port, browserPath] = contents.value.split("\n").map((line) => line.trim());
 		if (port === void 0 || browserPath === void 0 || !/^\d+$/.test(port) || !browserPath.startsWith("/")) return yield* new BrowserError({ message: `Unrecognised ${file}` });
 		return `ws://127.0.0.1:${port}${browserPath}`;
 	});
@@ -36621,10 +36709,10 @@ const layer$2 = effect(Service$2, gen(function* () {
 			Launch: (launchSource) => launchedHandle(launchSource, connectTimeout),
 			Attach: ({ endpoint }) => attachedHandle(endpoint, endpoint, connectTimeout, none()),
 			Playwriter: ({ endpoint }) => attachedHandle(endpoint, "playwriter", connectTimeout, none()),
-			Chrome: ({ userDataDir }) => gen(function* () {
-				const endpoint = yield* chromeEndpoint(userDataDir);
-				yield* logInfo("Connecting to Chrome; click Allow if Chrome asks");
-				return yield* attachedHandle(endpoint, "chrome", connectTimeout, none());
+			Chrome: ({ userDataDir, port, approvalTimeout }) => gen(function* () {
+				const endpoint = yield* chromeEndpoint(userDataDir, port);
+				yield* logWarning("Chrome is asking to \"Allow remote debugging?\" — click Allow in Chrome to continue");
+				return yield* attachedHandle(endpoint, "chrome", max$1(connectTimeout, approvalTimeout), none()).pipe(mapError((error) => new BrowserError({ message: `Could not attach to Chrome (${error.message}). Turn on chrome://inspect/#remote-debugging, keep Chrome open, and click Allow when it asks; Cancel refuses the connection` })));
 			}),
 			AgentBrowser: (agentSource) => gen(function* () {
 				const endpoint = yield* agentBrowserEndpoint(agentSource, connectTimeout);
@@ -54620,7 +54708,7 @@ const NodeInfo = fromJsonString(Struct({
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snapshot",
-		version: "0.4.0"
+		version: "0.4.1"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -54828,6 +54916,8 @@ const flags = {
 	]).pipe(withDescription$1("Where pages live. launch: a headless installed Chrome. chrome: your everyday Chrome (enable chrome://inspect/#remote-debugging). agent-browser / playwriter / cdp: attach to that browser. auto: launch when a URL is given, otherwise agent-browser, then chrome"), withDefault("auto")),
 	cdp: optionalString("cdp", "CDP endpoint to attach to (http://host:port or ws://…); implies --source cdp"),
 	chromeUserDataDir: optionalString("chrome-user-data-dir", "Chrome user data directory for --source chrome (default: the platform's Google Chrome profile root)"),
+	chromePort: Int("chrome-port").pipe(withDescription$1("Chrome's remote debugging port, used when its DevToolsActivePort file can't be read"), withDefault(9222)),
+	chromeApprovalTimeout: milliseconds("chrome-approval-timeout", 12e4, "How long --source chrome waits for you to click Allow in Chrome"),
 	playwriterEndpoint: String$1("playwriter-endpoint").pipe(withDescription$1("Playwriter relay CDP endpoint"), withDefault("http://127.0.0.1:19988")),
 	tab: optionalString("tab", "Attached browsers: capture the tab whose URL or title contains this text (default: the visible tab)"),
 	agentBrowserBin: String$1("agent-browser-bin").pipe(withDescription$1("agent-browser executable"), withDefault("agent-browser")),
@@ -54967,7 +55057,11 @@ const resolveSources = (input, hasUrl, home, localAppData) => gen(function* () {
 		bin: input.agentBrowserBin,
 		session: input.agentBrowserSession
 	});
-	const chrome = Source.Chrome({ userDataDir: getOrElse(input.chromeUserDataDir, () => chromeUserDataDir(home, localAppData)) });
+	const chrome = Source.Chrome({
+		userDataDir: getOrElse(input.chromeUserDataDir, () => chromeUserDataDir(home, localAppData)),
+		port: input.chromePort,
+		approvalTimeout: millis(input.chromeApprovalTimeout)
+	});
 	if (source === "launch") return [launch];
 	if (source === "chrome") return [chrome];
 	if (source === "agent-browser") return [agentBrowser];
@@ -55269,7 +55363,7 @@ const command = make$3("paper-snapshot", flags, run).pipe(withDescription("Snaps
 //#region src/bin.ts
 const LoggerLive = mergeAll(layer$4([consolePretty()]), succeed$3(LogToStderr, true));
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.4.0" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.4.1" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);

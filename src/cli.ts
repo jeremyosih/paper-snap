@@ -68,6 +68,17 @@ const flags = {
     "chrome-user-data-dir",
     "Chrome user data directory for --source chrome (default: the platform's Google Chrome profile root)",
   ),
+  chromePort: Flag.Int("chrome-port").pipe(
+    Flag.withDescription(
+      "Chrome's remote debugging port, used when its DevToolsActivePort file can't be read",
+    ),
+    Flag.withDefault(9222),
+  ),
+  chromeApprovalTimeout: milliseconds(
+    "chrome-approval-timeout",
+    120_000,
+    "How long --source chrome waits for you to click Allow in Chrome",
+  ),
   playwriterEndpoint: Flag.String("playwriter-endpoint").pipe(
     Flag.withDescription("Playwriter relay CDP endpoint"),
     Flag.withDefault("http://127.0.0.1:19988"),
@@ -376,6 +387,8 @@ const resolveSources = (input: Input, hasUrl: boolean, home: string, localAppDat
       userDataDir: Option.getOrElse(input.chromeUserDataDir, () =>
         chromeUserDataDir(home, localAppData),
       ),
+      port: input.chromePort,
+      approvalTimeout: Duration.millis(input.chromeApprovalTimeout),
     });
 
     if (source === "launch") return [launch];
