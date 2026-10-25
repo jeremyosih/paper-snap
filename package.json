@@ -21,7 +21,7 @@
     "url": "git+https://github.com/jeremyosih/paper-snapshot.git"
   },
   "bin": {
-    "paper-snapshot": "./dist/bin.mjs"
+    "paper-snapshot": "dist/bin.mjs"
   },
   "files": [
     "dist",
