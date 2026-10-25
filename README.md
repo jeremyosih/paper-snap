@@ -6,7 +6,7 @@ Snapshot any URL, local dev server, or live browser tab into [Paper](https://pap
 paper-snap https://linear.app                                   # whole page → new artboard
 paper-snap http://localhost:3000 -s "#pricing" --width 390      # one element, mobile width
 paper-snap                                                      # the tab agent-browser is on
-paper-snap --source playwriter --tab localhost:3000             # a tab in your own Chrome
+paper-snap --source chrome --tab localhost:3000                 # a tab in your everyday Chrome
 paper-snap https://example.com --out snap.html --json           # HTML only, JSON summary
 ```
 
@@ -27,12 +27,13 @@ Requirements: Node 22+, the Paper app running (for pushing), and a Chromium-base
 
 ## Browser sources
 
-| `--source`      | Page comes from                                                                                          |
-| --------------- | -------------------------------------------------------------------------------------------------------- |
-| `launch`        | A headless installed Chrome (default when a URL is given)                                                |
-| `agent-browser` | The tab [agent-browser](https://github.com/vercel-labs/agent-browser) is driving (default without a URL) |
-| `playwriter`    | Your own Chrome via the [Playwriter](https://github.com/remorses/playwriter) extension                   |
-| `cdp`           | Any Chrome DevTools Protocol endpoint (`--cdp`)                                                          |
+| `--source`      | Page comes from                                                                                                         |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `chrome`        | Your everyday Chrome once `chrome://inspect/#remote-debugging` is on (Chrome 144+); Chrome asks you to Allow            |
+| `launch`        | A headless installed Chrome (default when a URL is given)                                                               |
+| `agent-browser` | The tab [agent-browser](https://github.com/vercel-labs/agent-browser) is driving (default without a URL, then `chrome`) |
+| `playwriter`    | Your own Chrome via the [Playwriter](https://github.com/remorses/playwriter) extension                                  |
+| `cdp`           | Any Chrome DevTools Protocol endpoint (`--cdp`)                                                                         |
 
 Attaching lets an agent click, type and log in first, then capture exactly that state. Attached browsers are left running.
 

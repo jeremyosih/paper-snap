@@ -25,6 +25,11 @@ export type Source = Data.TaggedEnum<{
   /** Playwriter's relay, which drives the user's own Chrome through its extension. */
   Playwriter: { readonly endpoint: string };
   AgentBrowser: { readonly bin: string; readonly session: Option.Option<string> };
+  /**
+   * The user's everyday Chrome, after "Remote debugging" is enabled at
+   * chrome://inspect/#remote-debugging (Chrome 144+). Chrome asks the user to allow each connection.
+   */
+  Chrome: { readonly userDataDir: string };
 }>;
 
 export const Source = Data.taggedEnum<Source>();
@@ -374,6 +379,33 @@ export const layer = Layer.effect(
       return { page, context, origin };
     });
 
+    /** Chrome publishes its debugging port and browser path in `<user data dir>/DevToolsActivePort`. */
+    const chromeEndpoint = Effect.fn("Browser.chromeEndpoint")(function* (userDataDir: string) {
+      const file = path.join(userDataDir, "DevToolsActivePort");
+
+      const contents = yield* fs.readFileString(file).pipe(
+        Effect.mapError(
+          () =>
+            new BrowserError({
+              message: `Chrome remote debugging is off (no ${file}). Enable it at chrome://inspect/#remote-debugging`,
+            }),
+        ),
+      );
+
+      const [port, browserPath] = contents.split("\n").map((line) => line.trim());
+
+      if (
+        port === undefined ||
+        browserPath === undefined ||
+        !/^\d+$/.test(port) ||
+        !browserPath.startsWith("/")
+      ) {
+        return yield* new BrowserError({ message: `Unrecognised ${file}` });
+      }
+
+      return `ws://127.0.0.1:${port}${browserPath}`;
+    });
+
     const open = Effect.fn("Browser.open")(function* (
       source: Source,
       settings: PageSettings,
@@ -383,6 +415,14 @@ export const layer = Layer.effect(
         Launch: (launchSource) => openLaunched(launchSource, settings),
         Attach: ({ endpoint }) => openAttached(endpoint, endpoint, settings, freshTab),
         Playwriter: ({ endpoint }) => openAttached(endpoint, "playwriter", settings, freshTab),
+        Chrome: ({ userDataDir }) =>
+          Effect.gen(function* () {
+            const endpoint = yield* chromeEndpoint(userDataDir);
+
+            yield* Effect.logInfo("Connecting to Chrome; click Allow if Chrome asks");
+
+            return yield* openAttached(endpoint, "chrome", settings, freshTab);
+          }),
         AgentBrowser: (agentSource) =>
           Effect.gen(function* () {
             const endpoint = yield* agentBrowserEndpoint(agentSource, settings.connectTimeout);

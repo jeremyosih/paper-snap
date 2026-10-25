@@ -10,9 +10,11 @@ description: Snapshot web UI into Paper as editable layers. Use when a URL, loca
 ## Steps
 
 1. **Pick the source.**
-   - A URL, public or localhost: `paper-snap <url>`. It launches the installed Chrome headlessly.
-   - A state that takes interaction to reach (logged in, modal open, form filled): drive agent-browser there, then run `paper-snap` with no URL. It captures the tab agent-browser is on.
-   - The user's own Chrome through Playwriter: `paper-snap --source playwriter --tab <text in the tab's URL or title>`. Any other CDP browser: `--cdp <endpoint>`.
+   - A URL, public or localhost, with no interaction needed: `paper-snap <url>`. It launches the installed Chrome headlessly.
+   - A state that takes interaction to reach (logged in, modal open, form filled): get the browser there first, then capture its tab without a URL.
+     - agent-browser: `paper-snap` (it captures the tab agent-browser is on).
+     - The user's everyday Chrome, also what Chrome DevTools MCP drives with `--autoConnect`: `paper-snap --source chrome --tab <text in the tab's URL or title>`. This needs remote debugging enabled at `chrome://inspect/#remote-debugging`, and the user clicks Allow when Chrome asks.
+     - Playwriter: `--source playwriter --tab <text>`. Any other CDP browser: `--cdp <endpoint>`.
 
    Done when you know which command you will run.
 
@@ -28,5 +30,6 @@ description: Snapshot web UI into Paper as editable layers. Use when a URL, loca
 - Snapshots run to several MB. Let paper-snap carry the HTML; reach for `--out snap.html` when a file on disk is the goal.
 - Images on localhost and private hosts are inlined automatically because Paper cannot reach them. Use `--inline-images always` for assets behind auth.
 - Sections that animate in on scroll can come out blank: give them time with `--settle 2000`, or force the final state with `--eval`.
-- Auth: `--storage-state <file>` for a launched browser, or log in through agent-browser and attach.
+- Auth: attach to a browser that is already logged in (`--source chrome` is the user's own session), or pass `--storage-state <file>` to a launched one.
+- Attached browsers stay open. Passing a URL while attached opens a temporary tab and closes it afterwards.
 - The first run downloads the Paper Snapshot extension from the Chrome Web Store and caches it in `~/.cache/paper-snap`.

@@ -2821,9 +2821,9 @@ function Array_(item) {
 /**
 * @since 2.0.0
 */
-const TypeId$41 = "~effect/data/Option";
+const TypeId$42 = "~effect/data/Option";
 const CommonProto$1 = {
-	[TypeId$41]: { _A: (_) => _ },
+	[TypeId$42]: { _A: (_) => _ },
 	...PipeInspectableProto,
 	[Symbol.iterator]() {
 		return new SingleShotGen(this);
@@ -2873,7 +2873,7 @@ const NoneProto = /*#__PURE__*/ Object.assign(/*#__PURE__*/ Object.create(Common
 	}
 });
 /** @internal */
-const isOption = (input) => hasProperty(input, TypeId$41);
+const isOption = (input) => hasProperty(input, TypeId$42);
 /** @internal */
 const isNone$1 = (fa) => fa._tag === "None";
 /** @internal */
@@ -2888,9 +2888,9 @@ const some$1 = (value) => {
 };
 //#endregion
 //#region node_modules/effect/dist/internal/result.js
-const TypeId$40 = "~effect/data/Result";
+const TypeId$41 = "~effect/data/Result";
 const CommonProto = {
-	[TypeId$40]: {
+	[TypeId$41]: {
 		/* v8 ignore next 2 */
 		_A: (_) => _,
 		_E: (_) => _
@@ -2904,7 +2904,7 @@ const SuccessProto = /*#__PURE__*/ Object.assign(/*#__PURE__*/ Object.create(Com
 	_tag: "Success",
 	_op: "Success",
 	[symbol](that) {
-		return isResult(that) && isSuccess$1(that) && equals$2(this.success, that.success);
+		return isResult$1(that) && isSuccess$2(that) && equals$2(this.success, that.success);
 	},
 	[symbol$1]() {
 		return combine$1(hash(this._tag))(hash(this.success));
@@ -2924,7 +2924,7 @@ const FailureProto = /*#__PURE__*/ Object.assign(/*#__PURE__*/ Object.create(Com
 	_tag: "Failure",
 	_op: "Failure",
 	[symbol](that) {
-		return isResult(that) && isFailure$2(that) && equals$2(this.failure, that.failure);
+		return isResult$1(that) && isFailure$2(that) && equals$2(this.failure, that.failure);
 	},
 	[symbol$1]() {
 		return combine$1(hash(this._tag))(hash(this.failure));
@@ -2941,11 +2941,11 @@ const FailureProto = /*#__PURE__*/ Object.assign(/*#__PURE__*/ Object.create(Com
 	}
 });
 /** @internal */
-const isResult = (input) => hasProperty(input, TypeId$40);
+const isResult$1 = (input) => hasProperty(input, TypeId$41);
 /** @internal */
 const isFailure$2 = (result) => result._tag === "Failure";
 /** @internal */
-const isSuccess$1 = (result) => result._tag === "Success";
+const isSuccess$2 = (result) => result._tag === "Success";
 /** @internal */
 const fail$7 = (failure) => {
 	const a = Object.create(FailureProto);
@@ -3678,7 +3678,7 @@ const ServiceProto = {
 };
 const cacheKeys = /*#__PURE__*/ new Set();
 const ReferenceTypeId = "~effect/Context/Reference";
-const TypeId$39 = "~effect/Context";
+const TypeId$40 = "~effect/Context";
 const MaxDepth = 8;
 const FlattenAfterBaseHits = 8;
 const makeImpl = (cacheRoot, base, overlay, depth) => {
@@ -3758,7 +3758,7 @@ const Proto$14 = {
 		return flatten(this);
 	},
 	...PipeInspectableProto,
-	[TypeId$39]: { _Services: (_) => _ },
+	[TypeId$40]: { _Services: (_) => _ },
 	toJSON() {
 		return {
 			_id: "Context",
@@ -3813,7 +3813,7 @@ const hasSameCache = (self, that) => self.cacheRoot === that.cacheRoot;
 * @category guards
 * @since 2.0.0
 */
-const isContext = (u) => hasProperty(u, TypeId$39);
+const isContext = (u) => hasProperty(u, TypeId$40);
 /**
 * Checks whether the provided argument is a `Reference`.
 *
@@ -4279,6 +4279,34 @@ const try_$2 = (evaluate) => {
 	}
 };
 /**
+* Checks whether a value is a `Result` (either `Success` or `Failure`).
+*
+* **When to use**
+*
+* Use to validate unknown input before operating on it as a `Result`.
+*
+* **Details**
+*
+* - Returns `true` for both `Success` and `Failure` variants
+* - Acts as a TypeScript type guard, narrowing to `Result<unknown, unknown>`
+*
+* **Example** (Checking if a value is a Result)
+*
+* ```ts import.meta.vitest
+* import { Result } from "effect"
+*
+* Result.isResult(Result.succeed(1)) // => true
+*
+* Result.isResult({ value: 1 }) // => false
+* ```
+*
+* @see {@link isSuccess} / {@link isFailure} to narrow to a specific variant
+*
+* @category guards
+* @since 4.0.0
+*/
+const isResult = isResult$1;
+/**
 * Checks whether a `Result` is a `Failure`.
 *
 * **When to use**
@@ -4309,6 +4337,37 @@ const try_$2 = (evaluate) => {
 * @since 4.0.0
 */
 const isFailure$1 = isFailure$2;
+/**
+* Checks whether a `Result` is a `Success`.
+*
+* **When to use**
+*
+* Use to narrow a known `Result` to the `Success` variant.
+*
+* **Details**
+*
+* - Acts as a TypeScript type guard, narrowing to `Success<A, E>`
+* - After narrowing, you can access `.success` to read the value
+*
+* **Example** (Narrowing to success)
+*
+* ```ts import.meta.vitest
+* import { Result } from "effect"
+*
+* const result = Result.succeed(42)
+*
+* if (Result.isSuccess(result)) {
+*   result.success // => 42
+* }
+* ```
+*
+* @see {@link isFailure} for the opposite check
+* @see {@link isResult} to check if a value is any Result
+*
+* @category guards
+* @since 4.0.0
+*/
+const isSuccess$1 = isSuccess$2;
 //#endregion
 //#region node_modules/effect/dist/Tuple.js
 /**
@@ -4984,7 +5043,7 @@ const dedupe = (self) => {
 };
 //#endregion
 //#region node_modules/effect/dist/Duration.js
-const TypeId$38 = "~effect/time/Duration";
+const TypeId$39 = "~effect/time/Duration";
 const bigint0$2 = /*#__PURE__*/ BigInt(0);
 const bigint1 = /*#__PURE__*/ BigInt(1);
 const bigint2 = /*#__PURE__*/ BigInt(2);
@@ -5060,7 +5119,7 @@ const fromInputUnsafe = (input) => {
 		}
 		case "object": {
 			if (input === null) break;
-			if (TypeId$38 in input) return input;
+			if (TypeId$39 in input) return input;
 			if (Array.isArray(input)) {
 				if (input.length !== 2 || !input.every(isNumber)) return invalid(input);
 				if (Number.isNaN(input[0]) || Number.isNaN(input[1])) return zero$1;
@@ -5092,7 +5151,7 @@ const zeroDurationValue = {
 const infinityDurationValue = { _tag: "Infinity" };
 const negativeInfinityDurationValue = { _tag: "NegativeInfinity" };
 const DurationProto = {
-	[TypeId$38]: TypeId$38,
+	[TypeId$39]: TypeId$39,
 	[symbol$1]() {
 		switch (this.value._tag) {
 			case "Millis": {
@@ -5178,7 +5237,7 @@ const make$31 = (input) => {
 * @category guards
 * @since 2.0.0
 */
-const isDuration = (u) => hasProperty(u, TypeId$38);
+const isDuration = (u) => hasProperty(u, TypeId$39);
 /**
 * Checks whether a Duration is finite (not infinite).
 *
@@ -7195,7 +7254,7 @@ const option$2 = (self) => match$1(self, {
 	onSuccess: some
 });
 /** @internal */
-const result$1 = (self) => matchEager(self, {
+const result$2 = (self) => matchEager(self, {
 	onFailure: fail$6,
 	onSuccess: succeed$6
 });
@@ -9141,14 +9200,14 @@ const forkUnsafe = scopeForkUnsafe;
 const close = scopeClose;
 //#endregion
 //#region node_modules/effect/dist/Layer.js
-const TypeId$36 = "~effect/Layer";
+const TypeId$37 = "~effect/Layer";
 const MemoMapTypeId = "~effect/Layer/MemoMap";
 const memoMapReuse = (entry, scope) => {
 	entry.observers++;
 	return andThen$1(scopeAddFinalizerExit(scope, (exit) => entry.finalizer(exit)), entry.effect);
 };
 const LayerProto = {
-	[TypeId$36]: {
+	[TypeId$37]: {
 		_ROut: identity,
 		_E: identity,
 		_RIn: identity
@@ -9892,11 +9951,11 @@ const currentTimeMillis = currentTimeMillis$1;
 //#endregion
 //#region node_modules/effect/dist/internal/dateTime.js
 /** @internal */
-const TypeId$35 = "~effect/time/DateTime";
+const TypeId$36 = "~effect/time/DateTime";
 /** @internal */
 const TimeZoneTypeId = "~effect/time/DateTime/TimeZone";
 const Proto$13 = {
-	[TypeId$35]: TypeId$35,
+	[TypeId$36]: TypeId$36,
 	pipe() {
 		return pipeArguments(this, arguments);
 	},
@@ -11007,7 +11066,7 @@ const tap = tap$1;
 * @category error handling
 * @since 4.0.0
 */
-const result = result$1;
+const result$1 = result$2;
 /**
 * Converts success to `Option.some` and failure to `Option.none`.
 *
@@ -14000,7 +14059,7 @@ const runMain = /* @__PURE__ */ makeRunMain(({ fiber, teardown }) => {
 *
 * @since 4.0.0
 */
-const TypeId$34 = "~effect/platform/PlatformError";
+const TypeId$35 = "~effect/platform/PlatformError";
 /**
 * Error data for an invalid argument passed to a platform API.
 *
@@ -14110,7 +14169,7 @@ var PlatformError = class extends (/*#__PURE__*/ TaggedError$1("PlatformError"))
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$34] = TypeId$34;
+	[TypeId$35] = TypeId$35;
 	get message() {
 		return this.reason.message;
 	}
@@ -14243,9 +14302,9 @@ const runIn = fiberRunIn;
 const makeUnsafe$1 = makeLatchUnsafe;
 //#endregion
 //#region node_modules/effect/dist/MutableRef.js
-const TypeId$33 = "~effect/MutableRef";
+const TypeId$34 = "~effect/MutableRef";
 const MutableRefProto = {
-	[TypeId$33]: TypeId$33,
+	[TypeId$34]: TypeId$34,
 	...PipeInspectableProto,
 	toJSON() {
 		return {
@@ -14486,7 +14545,7 @@ const take$1 = (self) => {
 };
 //#endregion
 //#region node_modules/effect/dist/Queue.js
-const TypeId$32 = "~effect/Queue";
+const TypeId$33 = "~effect/Queue";
 const EnqueueTypeId = "~effect/Queue/Enqueue";
 const DequeueTypeId = "~effect/Queue/Dequeue";
 const variance$1 = {
@@ -14494,7 +14553,7 @@ const variance$1 = {
 	_E: identity
 };
 const QueueProto = {
-	[TypeId$32]: variance$1,
+	[TypeId$33]: variance$1,
 	[EnqueueTypeId]: variance$1,
 	[DequeueTypeId]: variance$1,
 	...PipeInspectableProto,
@@ -15385,7 +15444,7 @@ var SemaphoreImpl = class {
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$31 = "~effect/Channel";
+const TypeId$32 = "~effect/Channel";
 /**
 * Checks whether a value is a `Channel`.
 *
@@ -15402,9 +15461,9 @@ const TypeId$31 = "~effect/Channel";
 * @category guards
 * @since 3.5.4
 */
-const isChannel = (u) => hasProperty(u, TypeId$31);
+const isChannel = (u) => hasProperty(u, TypeId$32);
 const ChannelProto = {
-	[TypeId$31]: {
+	[TypeId$32]: {
 		_Env: identity,
 		_InErr: identity,
 		_InElem: identity,
@@ -16074,14 +16133,14 @@ const runFold = /*#__PURE__*/ dual(3, (self, initial, f) => suspend$2(() => {
 const toPullScoped = (self, scope) => toTransform(self)(done$1(), scope);
 //#endregion
 //#region node_modules/effect/dist/internal/stream.js
-const TypeId$30 = "~effect/Stream";
+const TypeId$31 = "~effect/Stream";
 const streamVariance = {
 	_R: identity,
 	_E: identity,
 	_A: identity
 };
 const StreamProto = {
-	[TypeId$30]: streamVariance,
+	[TypeId$31]: streamVariance,
 	pipe() {
 		return pipeArguments(this, arguments);
 	}
@@ -16094,7 +16153,7 @@ const fromChannel$2 = (channel) => {
 };
 //#endregion
 //#region node_modules/effect/dist/Sink.js
-const TypeId$29 = "~effect/Sink";
+const TypeId$30 = "~effect/Sink";
 const endVoid = /*#__PURE__*/ succeed$2([void 0]);
 const sinkVariance = {
 	_A: identity,
@@ -16104,7 +16163,7 @@ const sinkVariance = {
 	_R: identity
 };
 const SinkProto = {
-	[TypeId$29]: sinkVariance,
+	[TypeId$30]: sinkVariance,
 	pipe() {
 		return pipeArguments(this, arguments);
 	}
@@ -16127,7 +16186,7 @@ const SinkProto = {
 * @category guards
 * @since 4.0.0
 */
-const isSink = (u) => hasProperty(u, TypeId$29);
+const isSink = (u) => hasProperty(u, TypeId$30);
 /**
 * Creates a sink from a `Channel`.
 *
@@ -16277,7 +16336,7 @@ const forEachArray = (f) => fromTransform((upstream) => upstream.pipe(flatMap$1(
 const unwrap$1 = (effect) => fromChannel$1(unwrap$2(map$6(effect, toChannel$1)));
 //#endregion
 //#region node_modules/effect/dist/internal/rcRef.js
-const TypeId$28 = "~effect/RcRef";
+const TypeId$29 = "~effect/RcRef";
 const stateEmpty = { _tag: "Empty" };
 const stateClosed = { _tag: "Closed" };
 const variance = {
@@ -16285,7 +16344,7 @@ const variance = {
 	_E: identity
 };
 var RcRefImpl = class {
-	[TypeId$28] = variance;
+	[TypeId$29] = variance;
 	pipe() {
 		return pipeArguments(this, arguments);
 	}
@@ -16488,7 +16547,7 @@ const get = get$1;
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$27 = "~effect/Stream";
+const TypeId$28 = "~effect/Stream";
 /**
 * Checks whether a value is a Stream.
 *
@@ -16504,7 +16563,7 @@ const TypeId$27 = "~effect/Stream";
 * @category guards
 * @since 4.0.0
 */
-const isStream = (u) => hasProperty(u, TypeId$27);
+const isStream = (u) => hasProperty(u, TypeId$28);
 /**
 * Creates a stream from a array-emitting `Channel`.
 *
@@ -17090,7 +17149,7 @@ const toReadableStreamEffect = /*#__PURE__*/ dual((args) => isStream(args[0]), (
 *
 * @since 4.0.0
 */
-const TypeId$26 = "~effect/platform/FileSystem";
+const TypeId$27 = "~effect/platform/FileSystem";
 /**
 * Creates a `Size` from various numeric input types.
 *
@@ -17188,7 +17247,7 @@ const FileSystem = /*#__PURE__*/ Service$3("effect/platform/FileSystem");
 */
 const make$23 = (impl) => FileSystem.of({
 	...impl,
-	[TypeId$26]: TypeId$26,
+	[TypeId$27]: TypeId$27,
 	exists: (path) => pipe$1(impl.access(path), as(true), catchTag("PlatformError", (e) => e.reason._tag === "NotFound" ? succeed$2(false) : fail$2(e))),
 	readFileString: (path, encoding) => flatMap$1(impl.readFile(path), (_) => try_({
 		try: () => new TextDecoder(encoding).decode(_),
@@ -17315,7 +17374,7 @@ var WatchBackend = class extends (/*#__PURE__*/ Service$3()("effect/platform/Fil
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$25 = "~effect/platform/Path";
+const TypeId$26 = "~effect/platform/Path";
 /**
 * Service tag for accessing the current `Path` implementation.
 *
@@ -17419,7 +17478,7 @@ const fromOptionExit = (option) => option._tag === "None" ? missingExit : succee
 *
 * @since 4.0.0
 */
-const TypeId$24 = "~effect/SchemaIssue/Issue";
+const TypeId$25 = "~effect/SchemaIssue/Issue";
 /**
 * Returns `true` if the given value is an {@link Issue}.
 *
@@ -17449,7 +17508,7 @@ const TypeId$24 = "~effect/SchemaIssue/Issue";
 * @since 4.0.0
 */
 function isIssue(u) {
-	return hasProperty(u, TypeId$24) && u[TypeId$24] === TypeId$24;
+	return hasProperty(u, TypeId$25) && u[TypeId$25] === TypeId$25;
 }
 /**
 * Returns `true` when an issue contains an input reported by the schema parser.
@@ -17484,7 +17543,7 @@ function hasInput(issue) {
 	return Object.hasOwn(issue, "input");
 }
 var Base$1 = class {
-	[TypeId$24] = TypeId$24;
+	[TypeId$25] = TypeId$25;
 	constructor(input, options) {
 		if (options?.reportInput === true && input !== missing) this.input = input;
 	}
@@ -18467,9 +18526,9 @@ function stringifyJson(options) {
 *
 * @since 2.0.0
 */
-const TypeId$23 = "~effect/BigDecimal";
+const TypeId$24 = "~effect/BigDecimal";
 const BigDecimalProto = {
-	[TypeId$23]: TypeId$23,
+	[TypeId$24]: TypeId$24,
 	[symbol$1]() {
 		const normalized = normalize(this);
 		return combine$1(hash(normalized.value), number$3(normalized.scale));
@@ -18516,7 +18575,7 @@ const BigDecimalProto = {
 * @category guards
 * @since 2.0.0
 */
-const isBigDecimal = (u) => hasProperty(u, TypeId$23);
+const isBigDecimal = (u) => hasProperty(u, TypeId$24);
 /**
 * Creates a `BigDecimal` from a `bigint` value and a scale.
 *
@@ -18846,7 +18905,7 @@ const isZero = (n) => n.value === bigint0;
 const isNegative = (n) => n.value < bigint0;
 //#endregion
 //#region node_modules/effect/dist/SchemaTransformation.js
-const TypeId$22 = "~effect/SchemaTransformation/Transformation";
+const TypeId$23 = "~effect/SchemaTransformation/Transformation";
 /**
 * Represents a bidirectional transformation between a decoded type `T` and an encoded
 * type `E`, built from a pair of `Getter`s.
@@ -18889,7 +18948,7 @@ const TypeId$22 = "~effect/SchemaTransformation/Transformation";
 * @since 4.0.0
 */
 var Transformation = class Transformation {
-	[TypeId$22] = TypeId$22;
+	[TypeId$23] = TypeId$23;
 	_tag = "Transformation";
 	decode;
 	encode;
@@ -18933,7 +18992,7 @@ var Transformation = class Transformation {
 * @since 4.0.0
 */
 function isTransformation(u) {
-	return hasProperty(u, TypeId$22) && u[TypeId$22] === TypeId$22;
+	return hasProperty(u, TypeId$23) && u[TypeId$23] === TypeId$23;
 }
 /**
 * Constructs a `Transformation` from an object with `decode` and `encode`
@@ -19291,7 +19350,7 @@ var Context = class {
 		this.annotations = annotations;
 	}
 };
-const TypeId$21 = "~effect/Schema";
+const TypeId$22 = "~effect/Schema";
 /**
 * Represents the abstract base class for all {@link AST} node variants.
 *
@@ -19313,7 +19372,7 @@ const TypeId$21 = "~effect/Schema";
 * @since 4.0.0
 */
 var Base = class {
-	[TypeId$21] = TypeId$21;
+	[TypeId$22] = TypeId$22;
 	annotations;
 	checks;
 	encoding;
@@ -21318,7 +21377,7 @@ var ChildProcessSpawner = class extends (/*#__PURE__*/ Service$3()("effect/proce
 *
 * @since 4.0.0
 */
-const TypeId$20 = "~effect/unstable/process/ChildProcess";
+const TypeId$21 = "~effect/unstable/process/ChildProcess";
 const Proto$12 = {
 	.../*#__PURE__*/ Prototype({
 		label: "Command",
@@ -21326,7 +21385,7 @@ const Proto$12 = {
 			return getUnsafe(fiber.context, ChildProcessSpawner).spawn(this);
 		}
 	}),
-	[TypeId$20]: TypeId$20
+	[TypeId$21]: TypeId$21
 };
 const makeStandardCommand = (command, args, options) => Object.assign(Object.create(Proto$12), {
 	_tag: "StandardCommand",
@@ -22160,7 +22219,7 @@ const v7String = (timestampMillis, bytes) => stringify(bytes === void 0 ? v7Byte
 *
 * @since 4.0.0
 */
-const TypeId$19 = "~effect/platform/Crypto";
+const TypeId$20 = "~effect/platform/Crypto";
 /**
 * Service tag for platform cryptography.
 *
@@ -22231,7 +22290,7 @@ const make$16 = (impl) => {
 		}
 	};
 	return Crypto.of({
-		[TypeId$19]: TypeId$19,
+		[TypeId$20]: TypeId$20,
 		randomBytes,
 		nextDoubleUnsafe,
 		nextIntUnsafe,
@@ -22753,7 +22812,7 @@ const fileUrlOps = (windows) => ({
 * @since 4.0.0
 */
 const layer$10 = /* @__PURE__ */ succeed$3(Path$1)({
-	[TypeId$25]: TypeId$25,
+	[TypeId$26]: TypeId$26,
 	...Path,
 	.../*#__PURE__*/ fileUrlOps(void 0)
 });
@@ -22783,7 +22842,7 @@ const layer$10 = /* @__PURE__ */ succeed$3(Path$1)({
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$18 = "~effect/Stdio";
+const TypeId$19 = "~effect/Stdio";
 /**
 * Service tag for process standard I/O.
 *
@@ -22798,7 +22857,7 @@ const TypeId$18 = "~effect/Stdio";
 * @category services
 * @since 4.0.0
 */
-const Stdio = /*#__PURE__*/ Service$3(TypeId$18);
+const Stdio = /*#__PURE__*/ Service$3(TypeId$19);
 /**
 * Creates a `Stdio` service implementation from the provided fields and
 * attaches the `Stdio` type identifier.
@@ -22820,7 +22879,7 @@ const Stdio = /*#__PURE__*/ Service$3(TypeId$18);
 * @since 4.0.0
 */
 const make$14 = (options) => ({
-	[TypeId$18]: TypeId$18,
+	[TypeId$19]: TypeId$19,
 	stdinIsTerminal: succeed$2(false),
 	stdoutIsTerminal: succeed$2(false),
 	...options
@@ -23196,9 +23255,9 @@ function makeParser$1(ast, compile, compileConstructorDefault, constructorDefaul
 //#endregion
 //#region node_modules/effect/dist/internal/schema/schema.js
 /** @internal */
-const TypeId$17 = "~effect/Schema/Schema";
+const TypeId$18 = "~effect/Schema/Schema";
 const SchemaProto = {
-	[TypeId$17]: TypeId$17,
+	[TypeId$18]: TypeId$18,
 	pipe() {
 		return pipeArguments(this, arguments);
 	},
@@ -23267,7 +23326,7 @@ const lambda = (f) => f;
 /** @internal */
 const redactedRegistry = /*#__PURE__*/ new WeakMap();
 /** @internal */
-const value$1 = (self) => {
+const value$3 = (self) => {
 	if (redactedRegistry.has(self)) return redactedRegistry.get(self);
 	else throw new Error("Unable to get redacted value" + (self.label ? ` with label: "${self.label}"` : ""));
 };
@@ -23285,7 +23344,7 @@ const value$1 = (self) => {
 *
 * @since 3.3.0
 */
-const TypeId$16 = "~effect/data/Redacted";
+const TypeId$17 = "~effect/data/Redacted";
 /**
 * Returns `true` if a value is a `Redacted` wrapper.
 *
@@ -23313,7 +23372,7 @@ const TypeId$16 = "~effect/data/Redacted";
 * @category guards
 * @since 3.3.0
 */
-const isRedacted = (u) => hasProperty(u, TypeId$16);
+const isRedacted = (u) => hasProperty(u, TypeId$17);
 /**
 * Creates a `Redacted` wrapper for a sensitive value.
 *
@@ -23347,7 +23406,7 @@ const make$11 = (value, options) => {
 	return self;
 };
 const Proto$11 = {
-	[TypeId$16]: { _A: (_) => _ },
+	[TypeId$17]: { _A: (_) => _ },
 	label: void 0,
 	...PipeInspectableProto,
 	toJSON() {
@@ -23384,10 +23443,10 @@ const Proto$11 = {
 * @category getters
 * @since 3.3.0
 */
-const value = value$1;
+const value$2 = value$3;
 //#endregion
 //#region node_modules/effect/dist/Schema.js
-const TypeId$15 = TypeId$17;
+const TypeId$16 = TypeId$18;
 const SchemaErrorTypeId = "~effect/SchemaError/SchemaError";
 /**
 * Error thrown or returned when schema decoding or encoding fails.
@@ -23615,7 +23674,7 @@ const make$10 = make$12;
 * @since 3.10.0
 */
 function isSchema(u) {
-	return hasProperty(u, TypeId$15) && u[TypeId$15] === TypeId$15;
+	return hasProperty(u, TypeId$16) && u[TypeId$16] === TypeId$16;
 }
 /**
 * Creates an exact optional key schema for struct fields. Unlike `optional`,
@@ -24239,7 +24298,7 @@ function makeClass(Inherited, identifier, struct$1, annotations, proto) {
 				}
 			});
 		}
-		static [TypeId$15] = TypeId$15;
+		static [TypeId$16] = TypeId$16;
 		get [ClassTypeId]() {
 			return ClassTypeId;
 		}
@@ -24522,7 +24581,7 @@ const Json = /*#__PURE__*/ make$10(/*#__PURE__*/ annotate$1(Json$1, { toCode: ()
 }) }));
 //#endregion
 //#region node_modules/effect/dist/Terminal.js
-const TypeId$14 = "~effect/platform/Terminal";
+const TypeId$15 = "~effect/platform/Terminal";
 const QuitErrorTypeId = "effect/platform/Terminal/QuitError";
 /**
 * Represents an error that occurs when a user attempts to
@@ -24597,7 +24656,7 @@ const Terminal = /*#__PURE__*/ Service$3("effect/platform/Terminal");
 */
 const make$9 = (impl) => Terminal.of({
 	...impl,
-	[TypeId$14]: TypeId$14
+	[TypeId$15]: TypeId$15
 });
 /**
 * Provides the default process-backed `Terminal` service, ending key input on
@@ -26162,7 +26221,7 @@ function trieNodeAt(root, path) {
 }
 //#endregion
 //#region node_modules/effect/dist/Config.js
-const TypeId$13 = "~effect/Config";
+const TypeId$14 = "~effect/Config";
 /**
 * Represents the error type produced when config loading or validation fails.
 *
@@ -26204,7 +26263,7 @@ const Proto$9 = {
 			return this.parse(fiber.getRef(ConfigProvider));
 		}
 	}),
-	[TypeId$13]: TypeId$13,
+	[TypeId$14]: TypeId$14,
 	toJSON() {
 		return { _id: "Config" };
 	}
@@ -26589,7 +26648,7 @@ function string$5(name) {
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$12 = "~effect/cli/CliError";
+const TypeId$13 = "~effect/cli/CliError";
 /**
 * Type guard to check if a value is a CLI error.
 *
@@ -26610,7 +26669,7 @@ const TypeId$12 = "~effect/cli/CliError";
 * @category guards
 * @since 4.0.0
 */
-const isCliError = (u) => hasProperty(u, TypeId$12);
+const isCliError = (u) => hasProperty(u, TypeId$13);
 /**
 * Error thrown when an unrecognized option is encountered.
 *
@@ -26644,7 +26703,7 @@ const isCliError = (u) => hasProperty(u, TypeId$12);
 * @category errors
 * @since 4.0.0
 */
-var UnrecognizedOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/UnrecognizedOption`)("UnrecognizedOption", {
+var UnrecognizedOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/UnrecognizedOption`)("UnrecognizedOption", {
 	option: String$1,
 	command: /*#__PURE__*/ optional$4(/*#__PURE__*/ ArraySchema(String$1)),
 	suggestions: /*#__PURE__*/ ArraySchema(String$1)
@@ -26654,7 +26713,7 @@ var UnrecognizedOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Formats the unrecognized option with command context and suggestions.
 	*
@@ -26688,7 +26747,7 @@ var UnrecognizedOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/
 * @category errors
 * @since 4.0.0
 */
-var DuplicateOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/DuplicateOption`)("DuplicateOption", {
+var DuplicateOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/DuplicateOption`)("DuplicateOption", {
 	option: String$1,
 	parentCommand: String$1,
 	childCommand: String$1
@@ -26698,7 +26757,7 @@ var DuplicateOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/Dup
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Explains which parent and child commands define the duplicate option.
 	*
@@ -26740,13 +26799,13 @@ var DuplicateOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/Dup
 * @category errors
 * @since 4.0.0
 */
-var MissingOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/MissingOption`)("MissingOption", { option: String$1 })) {
+var MissingOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/MissingOption`)("MissingOption", { option: String$1 })) {
 	/**
 	* Marks this value as a missing CLI option error for runtime guards.
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Formats the missing required flag for display.
 	*
@@ -26787,13 +26846,13 @@ var MissingOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/Missi
 * @category errors
 * @since 4.0.0
 */
-var MissingArgument = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/MissingArgument`)("MissingArgument", { argument: String$1 })) {
+var MissingArgument = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/MissingArgument`)("MissingArgument", { argument: String$1 })) {
 	/**
 	* Marks this value as a missing CLI argument error for runtime guards.
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Formats the missing required positional argument for display.
 	*
@@ -26822,13 +26881,13 @@ var MissingArgument = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/Mis
 * @category errors
 * @since 4.0.0
 */
-var UnexpectedArgument = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/UnexpectedArgument`)("UnexpectedArgument", { arguments: /*#__PURE__*/ ArraySchema(String$1) })) {
+var UnexpectedArgument = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/UnexpectedArgument`)("UnexpectedArgument", { arguments: /*#__PURE__*/ ArraySchema(String$1) })) {
 	/**
 	* Marks this value as an unexpected CLI argument error for runtime guards.
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Formats the unexpected positional arguments for display.
 	*
@@ -26872,7 +26931,7 @@ var UnexpectedArgument = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/
 * @category errors
 * @since 4.0.0
 */
-var InvalidValue = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/InvalidValue`)("InvalidValue", {
+var InvalidValue = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/InvalidValue`)("InvalidValue", {
 	option: String$1,
 	value: String$1,
 	expected: String$1,
@@ -26883,7 +26942,7 @@ var InvalidValue = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/Invali
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Formats the invalid flag or argument value with the expected input.
 	*
@@ -26932,7 +26991,7 @@ var InvalidValue = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/Invali
 * @category errors
 * @since 4.0.0
 */
-var UnknownSubcommand = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/UnknownSubcommand`)("UnknownSubcommand", {
+var UnknownSubcommand = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/UnknownSubcommand`)("UnknownSubcommand", {
 	subcommand: String$1,
 	parent: /*#__PURE__*/ optional$4(/*#__PURE__*/ ArraySchema(String$1)),
 	suggestions: /*#__PURE__*/ ArraySchema(String$1)
@@ -26942,7 +27001,7 @@ var UnknownSubcommand = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/U
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Formats the unknown subcommand with parent command context and suggestions.
 	*
@@ -26996,7 +27055,7 @@ var UnknownSubcommand = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/U
 * @category errors
 * @since 4.0.0
 */
-var UserError = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/UserError`)("UserError", {
+var UserError = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/UserError`)("UserError", {
 	cause: /*#__PURE__*/ Defect(),
 	userMessage: /*#__PURE__*/ optionalKey(String$1)
 })) {
@@ -27005,7 +27064,7 @@ var UserError = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/UserError
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	/**
 	* Controls whether the runtime logger should report this error. The CLI
 	* runner sets this to `false` after rendering the error itself.
@@ -27058,11 +27117,11 @@ const NonShowHelpErrors = /*#__PURE__*/ Union([
 * @category errors
 * @since 4.0.0
 */
-var ShowHelp = class extends (/*#__PURE__*/ TaggedError(`${TypeId$12}/ShowHelp`)("ShowHelp", {
+var ShowHelp = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/ShowHelp`)("ShowHelp", {
 	commandPath: /*#__PURE__*/ ArraySchema(String$1),
 	errors: /*#__PURE__*/ ArraySchema(NonShowHelpErrors)
 })) {
-	[TypeId$12] = TypeId$12;
+	[TypeId$13] = TypeId$13;
 	[errorExitCode] = this.errors.length ? 1 : 0;
 	[errorReported] = false;
 	get message() {
@@ -27513,7 +27572,7 @@ const eraseLines = (rows) => {
 *
 * @since 4.0.0
 */
-const TypeId$11 = "~effect/cli/Prompt";
+const TypeId$12 = "~effect/cli/Prompt";
 const defaultTheme = {
 	prefix: "?",
 	arrowUp: "↑",
@@ -27900,7 +27959,7 @@ const proto = {
 			return run$2(this);
 		}
 	}),
-	[TypeId$11]: { _Output: (_) => _ }
+	[TypeId$12]: { _Output: (_) => _ }
 };
 const runWithInput = (prompt, terminal, input) => suspend$2(() => {
 	const op = prompt;
@@ -28993,7 +29052,7 @@ const entriesToDisplay = (cursor, total, maxVisible) => {
 *
 * @since 4.0.0
 */
-const TypeId$10 = "~effect/cli/Param";
+const TypeId$11 = "~effect/cli/Param";
 /**
 * Defines the kind discriminator for positional argument parameters.
 *
@@ -29024,7 +29083,7 @@ const argumentKind = "argument";
 */
 const flagKind = "flag";
 const Proto$7 = {
-	[TypeId$10]: { _A: identity },
+	[TypeId$11]: { _A: identity },
 	pipe() {
 		return pipeArguments(this, arguments);
 	}
@@ -29045,7 +29104,7 @@ const Proto$7 = {
 * @category guards
 * @since 4.0.0
 */
-const isParam = (u) => hasProperty(u, TypeId$10);
+const isParam = (u) => hasProperty(u, TypeId$11);
 /**
 * Type guard to check if a Single param is a flag (not an argument).
 *
@@ -30297,7 +30356,7 @@ const reconstructTree = (tree, results) => {
 * Internal implementation details for CLI commands.
 * Public API is in ../Command.ts
 */
-const TypeId$9 = "~effect/cli/Command";
+const TypeId$10 = "~effect/cli/Command";
 /**
 * Casts a Command to its internal implementation.
 * For use by internal modules that need access to config, parse, handle, etc.
@@ -30380,7 +30439,7 @@ const makeCommand = (options) => {
 		};
 	};
 	return Object.assign(Object.create(Proto$6), {
-		[TypeId$9]: TypeId$9,
+		[TypeId$10]: TypeId$10,
 		name: options.name,
 		examples: options.examples ?? [],
 		annotations,
@@ -31585,7 +31644,7 @@ const promptSingle = (single) => {
 		case "Date": return map$6(run$2(date$1({ message })), (date) => commandLineArg(date.toISOString()));
 		case "Float": return map$6(run$2(float$2({ message })), (value) => commandLineArg(String(value)));
 		case "Integer": return map$6(run$2(integer$3({ message })), (value) => commandLineArg(String(value)));
-		case "Redacted": return map$6(run$2(password({ message })), (value$2) => commandLineArg(value(value$2), "<redacted>"));
+		case "Redacted": return map$6(run$2(password({ message })), (value) => commandLineArg(value$2(value), "<redacted>"));
 		default: return map$6(run$2(text({ message })), commandLineArg);
 	}
 };
@@ -32056,7 +32115,7 @@ const runWith = (command, config) => {
 			commandPath,
 			errors: parsedArgs.errors
 		});
-		const parseResult = yield* result(commandImpl.parse(parsedArgs));
+		const parseResult = yield* result$1(commandImpl.parse(parsedArgs));
 		if (parseResult._tag === "Failure") return yield* new ShowHelp({
 			commandPath,
 			errors: [parseResult.failure]
@@ -32094,9 +32153,9 @@ const runWith = (command, config) => {
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$8 = /*#__PURE__*/ Symbol.for("~effect/http/Headers");
+const TypeId$9 = /*#__PURE__*/ Symbol.for("~effect/http/Headers");
 const Proto$5 = /*#__PURE__*/ Object.defineProperties(/*#__PURE__*/ Object.create(null), {
-	[TypeId$8]: { value: TypeId$8 },
+	[TypeId$9]: { value: TypeId$9 },
 	[symbolRedactable]: { value(context) {
 		return redact(this, get$2(context, CurrentRedactedNames));
 	} },
@@ -32292,10 +32351,10 @@ const CurrentRedactedNames = /*#__PURE__*/ Reference("effect/Headers/CurrentReda
 *
 * @since 4.0.0
 */
-const TypeId$7 = "~effect/http/Cookies";
+const TypeId$8 = "~effect/http/Cookies";
 const CookieTypeId = "~effect/http/Cookies/Cookie";
 const Proto$4 = {
-	[TypeId$7]: TypeId$7,
+	[TypeId$8]: TypeId$8,
 	...BaseProto,
 	toJSON() {
 		return {
@@ -32460,17 +32519,17 @@ const tryDecodeURIComponent = (str) => {
 *
 * @since 4.0.0
 */
-const TypeId$6 = "~effect/http/UrlParams";
+const TypeId$7 = "~effect/http/UrlParams";
 /**
 * Returns `true` when a value is a `UrlParams` instance.
 *
 * @category guards
 * @since 4.0.0
 */
-const isUrlParams = (u) => hasProperty(u, TypeId$6);
+const isUrlParams = (u) => hasProperty(u, TypeId$7);
 const Proto$3 = {
 	...PipeInspectableProto,
-	[TypeId$6]: TypeId$6,
+	[TypeId$7]: TypeId$7,
 	[Symbol.iterator]() {
 		return this.params[Symbol.iterator]();
 	},
@@ -32578,11 +32637,11 @@ const setAll = /*#__PURE__*/ dual(2, (self, input) => {
 });
 //#endregion
 //#region node_modules/effect/dist/unstable/http/HttpBody.js
-const TypeId$5 = "~effect/http/HttpBody";
+const TypeId$6 = "~effect/http/HttpBody";
 var Proto$2 = class {
-	[TypeId$5];
+	[TypeId$6];
 	constructor() {
-		this[TypeId$5] = TypeId$5;
+		this[TypeId$6] = TypeId$6;
 	}
 	[NodeInspectSymbol]() {
 		return this.toJSON();
@@ -32630,7 +32689,7 @@ const empty$1 = /*#__PURE__*/ new Empty();
 *
 * @since 4.0.0
 */
-const TypeId$4 = "~effect/http/HttpClientError";
+const TypeId$5 = "~effect/http/HttpClientError";
 /**
 * Error wrapper for HTTP client failures, exposing the failed request and the optional response through its `reason`.
 *
@@ -32650,7 +32709,7 @@ var HttpClientError = class extends (/*#__PURE__*/ TaggedError$1("HttpClientErro
 	*
 	* @since 4.0.0
 	*/
-	[TypeId$4] = TypeId$4;
+	[TypeId$5] = TypeId$5;
 	/**
 	* HTTP request associated with the client failure.
 	*
@@ -32864,9 +32923,9 @@ const baseUrl = () => {
 };
 //#endregion
 //#region node_modules/effect/dist/unstable/http/HttpClientRequest.js
-const TypeId$3 = "~effect/http/HttpClientRequest";
+const TypeId$4 = "~effect/http/HttpClientRequest";
 const Proto$1 = {
-	[TypeId$3]: TypeId$3,
+	[TypeId$4]: TypeId$4,
 	...BaseProto,
 	toJSON() {
 		return {
@@ -33016,7 +33075,7 @@ const setBody = /*#__PURE__*/ dual(2, (self, body) => {
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$2 = "~effect/http/HttpIncomingMessage";
+const TypeId$3 = "~effect/http/HttpIncomingMessage";
 /**
 * Builds an inspectable object for an incoming message, redacting headers and including a synchronously readable JSON or text body when available.
 *
@@ -33059,7 +33118,7 @@ const inspect = (self, that) => {
 * @category type IDs
 * @since 4.0.0
 */
-const TypeId$1 = "~effect/http/HttpClientResponse";
+const TypeId$2 = "~effect/http/HttpClientResponse";
 /**
 * Wraps a Web `Response` and its original `HttpClientRequest` as an `HttpClientResponse`.
 *
@@ -33079,16 +33138,16 @@ const filterStatusOk = (self) => self.status >= 200 && self.status < 300 ? succe
 	description: "non 2xx status code"
 }) }));
 var WebHttpClientResponse = class extends Class$1 {
+	[TypeId$3];
 	[TypeId$2];
-	[TypeId$1];
 	request;
 	source;
 	constructor(request, source) {
 		super();
 		this.request = request;
 		this.source = source;
+		this[TypeId$3] = TypeId$3;
 		this[TypeId$2] = TypeId$2;
-		this[TypeId$1] = TypeId$1;
 	}
 	toJSON() {
 		return inspect(this, {
@@ -33209,7 +33268,7 @@ const toHeaders = (span) => fromRecordUnsafe({
 });
 //#endregion
 //#region node_modules/effect/dist/unstable/http/HttpClient.js
-const TypeId = "~effect/http/HttpClient";
+const TypeId$1 = "~effect/http/HttpClient";
 /**
 * Service tag for the default outgoing HTTP client service.
 *
@@ -33249,7 +33308,7 @@ const makeWith = (postprocess, preprocess) => {
 	return self;
 };
 const Proto = {
-	[TypeId]: TypeId,
+	[TypeId$1]: TypeId$1,
 	pipe() {
 		return pipeArguments(this, arguments);
 	},
@@ -33398,8 +33457,8 @@ var InterruptibleResponse = class {
 		this.original = original;
 		this.controller = controller;
 	}
-	[TypeId$1] = TypeId$1;
 	[TypeId$2] = TypeId$2;
+	[TypeId$3] = TypeId$3;
 	applyInterrupt(effect) {
 		return suspend$2(() => {
 			responseRegistry.unregister(this.original);
@@ -33729,11 +33788,23 @@ const layer$2 = effect(Service$2, gen(function* () {
 			origin
 		};
 	});
+	/** Chrome publishes its debugging port and browser path in `<user data dir>/DevToolsActivePort`. */
+	const chromeEndpoint = fn("Browser.chromeEndpoint")(function* (userDataDir) {
+		const file = path.join(userDataDir, "DevToolsActivePort");
+		const [port, browserPath] = (yield* fs.readFileString(file).pipe(mapError(() => new BrowserError({ message: `Chrome remote debugging is off (no ${file}). Enable it at chrome://inspect/#remote-debugging` })))).split("\n").map((line) => line.trim());
+		if (port === void 0 || browserPath === void 0 || !/^\d+$/.test(port) || !browserPath.startsWith("/")) return yield* new BrowserError({ message: `Unrecognised ${file}` });
+		return `ws://127.0.0.1:${port}${browserPath}`;
+	});
 	const open = fn("Browser.open")(function* (source, settings, freshTab) {
 		return yield* Source.$match(source, {
 			Launch: (launchSource) => openLaunched(launchSource, settings),
 			Attach: ({ endpoint }) => openAttached(endpoint, endpoint, settings, freshTab),
 			Playwriter: ({ endpoint }) => openAttached(endpoint, "playwriter", settings, freshTab),
+			Chrome: ({ userDataDir }) => gen(function* () {
+				const endpoint = yield* chromeEndpoint(userDataDir);
+				yield* logInfo("Connecting to Chrome; click Allow if Chrome asks");
+				return yield* openAttached(endpoint, "chrome", settings, freshTab);
+			}),
 			AgentBrowser: (agentSource) => gen(function* () {
 				const endpoint = yield* agentBrowserEndpoint(agentSource, settings.connectTimeout);
 				const tab = isSome(settings.tab) ? settings.tab : yield* agentBrowserUrl(agentSource, settings.connectTimeout).pipe(option$1);
@@ -33746,6 +33817,243 @@ const layer$2 = effect(Service$2, gen(function* () {
 	});
 	return Service$2.of({ open });
 }));
+const ValueMatcherProto = {
+	["~effect/match/Match/Matcher"]: {
+		_input: identity,
+		_filters: identity,
+		_result: identity,
+		_return: identity,
+		_flavor: identity
+	},
+	_tag: "ValueMatcher",
+	add(_case) {
+		if (isSuccess$1(this.value)) return this;
+		if (_case._tag === "When" && _case.guard(this.provided) === true) return makeValueMatcher(this.provided, succeed$6(_case.evaluate(this.provided)));
+		else if (_case._tag === "Not" && _case.guard(this.provided) === false) return makeValueMatcher(this.provided, succeed$6(_case.evaluate(this.provided)));
+		return this;
+	},
+	pipe() {
+		return pipeArguments(this, arguments);
+	}
+};
+function makeValueMatcher(provided, value) {
+	const matcher = Object.create(ValueMatcherProto);
+	matcher.provided = provided;
+	matcher.value = value;
+	return matcher;
+}
+const makeWhen = (guard, evaluate) => ({
+	_tag: "When",
+	guard,
+	evaluate
+});
+const makePredicate = (pattern) => {
+	if (typeof pattern === "function") return pattern;
+	else if (Array.isArray(pattern)) {
+		const predicates = pattern.map(makePredicate);
+		const len = predicates.length;
+		return (u) => {
+			if (!Array.isArray(u)) return false;
+			for (let i = 0; i < len; i++) if (predicates[i](u[i]) === false) return false;
+			return true;
+		};
+	} else if (pattern !== null && typeof pattern === "object") {
+		const keysAndPredicates = Reflect.ownKeys(pattern).map((key) => [key, makePredicate(pattern[key])]);
+		const len = keysAndPredicates.length;
+		return (u) => {
+			if (typeof u !== "object" || u === null) return false;
+			for (let i = 0; i < len; i++) {
+				const [key, predicate] = keysAndPredicates[i];
+				if (!(key in u) || predicate(u[key]) === false) return false;
+			}
+			return true;
+		};
+	}
+	return (u) => u === pattern;
+};
+/** @internal */
+const value$1 = (i) => makeValueMatcher(i, fail$6(i));
+/** @internal */
+const when$1 = (pattern, f) => (self) => self.add(makeWhen(makePredicate(pattern), f));
+/** @internal */
+const orElse$1 = (f) => (self) => {
+	const toResult = result(self);
+	if (isResult(toResult)) return toResult._tag === "Success" ? toResult.success : f(toResult.failure);
+	return (...args) => {
+		const a = toResult(...args);
+		return isSuccess$1(a) ? a.success : f(a.failure, ...args);
+	};
+};
+/** @internal */
+const result = (self) => {
+	if (self._tag === "ValueMatcher") return self.value;
+	const len = self.cases.length;
+	if (len === 1) {
+		const _case = self.cases[0];
+		return (...args) => {
+			const input = self.select(...args);
+			if (_case._tag === "When" && _case.guard(input) === true) return succeed$6(_case.evaluate(input, ...args));
+			else if (_case._tag === "Not" && _case.guard(input) === false) return succeed$6(_case.evaluate(input, ...args));
+			return fail$6(input);
+		};
+	}
+	return (...args) => {
+		const input = self.select(...args);
+		for (let i = 0; i < len; i++) {
+			const _case = self.cases[i];
+			if (_case._tag === "When" && _case.guard(input) === true) return succeed$6(_case.evaluate(input, ...args));
+			else if (_case._tag === "Not" && _case.guard(input) === false) return succeed$6(_case.evaluate(input, ...args));
+		}
+		return fail$6(input);
+	};
+};
+//#endregion
+//#region node_modules/effect/dist/Match.js
+/**
+* Builds pattern matchers for TypeScript values.
+*
+* `Match` lets you add ordered cases and then finish them with a result,
+* fallback, `Option`, or exhaustive check. Use `Match.type` to define a
+* reusable matcher for a type, or `Match.value` to match one value immediately.
+* Cases can match literal values, predicates, object shapes, tags, negated
+* patterns, and common checks such as strings, numbers, records, and class
+* instances.
+*
+* @since 4.0.0
+*/
+/**
+* Creates a matcher from a specific value.
+*
+* **When to use**
+*
+* Use to match one concrete input immediately.
+*
+* **Details**
+*
+* This function allows you to define a `Matcher` directly from a given value,
+* rather than from a type. This is useful when working with known values,
+* enabling structured pattern matching on objects, primitives, or any data
+* structure.
+*
+* Once the matcher is created, you can use pattern-matching functions like
+* {@link when} to define how different cases should be handled.
+*
+* **Example** (Matching an Object by Property)
+*
+* ```ts import.meta.vitest
+* import { Match } from "effect"
+*
+* const input = { name: "John", age: 30 }
+*
+* // Create a matcher for the specific object
+* const result = Match.value(input).pipe(
+*   // Match when the 'name' property is "John"
+*   Match.when(
+*     { name: "John" },
+*     (user) => `${user.name} is ${user.age} years old`
+*   ),
+*   // Provide a fallback if no match is found
+*   Match.orElse(() => "Oh, not John")
+* )
+*
+* result // => "John is 30 years old"
+* ```
+*
+* @see {@link type} for creating a matcher from a specific type.
+*
+* @category constructors
+* @since 4.0.0
+*/
+const value = value$1;
+/**
+* Defines a condition for matching values.
+*
+* **When to use**
+*
+* Use to add one positive pattern case to a `Match.type` or `Match.value`
+* pipeline when a direct value, predicate, or structured object pattern should
+* run a handler for matching input.
+*
+* **Details**
+*
+* Supports both direct value comparisons and predicate functions. If the
+* pattern matches, the associated function is executed and the matched input is
+* removed from the remaining cases tracked by the matcher.
+*
+* **Example** (Matching with values and predicates)
+*
+* ```ts import.meta.vitest
+* import { Match } from "effect"
+*
+* // Create a matcher for objects with an "age" property
+* const match = Match.type<{ age: number }>().pipe(
+*   // Match when age is greater than 18
+*   Match.when(
+*     { age: (age: number) => age > 18 },
+*     (user: { age: number }) => `Age: ${user.age}`
+*   ),
+*   // Match when age is exactly 18
+*   Match.when({ age: 18 }, () => "You can vote"),
+*   // Fallback case for all other ages
+*   Match.orElse((user: { age: number }) => `${user.age} is too young`)
+* )
+*
+* match({ age: 20 }) // => "Age: 20"
+*
+* match({ age: 18 }) // => "You can vote"
+*
+* match({ age: 4 }) // => "4 is too young"
+* ```
+*
+* @see {@link whenOr} for handling any one of several patterns with the same handler
+* @see {@link whenAnd} for requiring all provided patterns to match before running a handler
+* @see {@link not} for handling inputs that do not match a pattern
+* @see {@link orElse} for providing a fallback when no pattern case matches
+*
+* @category defining patterns
+* @since 4.0.0
+*/
+const when = when$1;
+/**
+* Provides a fallback value when no patterns match.
+*
+* **When to use**
+*
+* Use to finalize a matcher with a fallback for unmatched input.
+*
+* **Details**
+*
+* This function ensures that a matcher always returns a valid result, even if
+* no defined patterns match. It acts as a default case, similar to the
+* `default` clause in a `switch` statement or the final `else` in an `if-else`
+* chain.
+*
+* **Example** (Providing a default value when no patterns match)
+*
+* ```ts import.meta.vitest
+* import { Match } from "effect"
+*
+* // Create a matcher for string or number values
+* const match = Match.type<string | number>().pipe(
+*   // Match when the value is "a"
+*   Match.when("a", () => "ok"),
+*   // Fallback when no patterns match
+*   Match.orElse(() => "fallback")
+* )
+*
+* match("a") // => "ok"
+*
+* match("b") // => "fallback"
+* ```
+*
+* @see {@link option} for finalizing unmatched input as `Option.none`
+* @see {@link result} for returning unmatched input as a `Result` failure
+* @see {@link orElseAbsurd} for finalizing when unmatched input should be impossible
+*
+* @category completion
+* @since 4.0.0
+*/
+const orElse = orElse$1;
 //#endregion
 //#region node_modules/effect/dist/unstable/cli/Argument.js
 /**
@@ -51087,7 +51395,7 @@ const CreatedNode = fromJsonString(Struct({ id: String$1 }));
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snap",
-		version: "0.1.0"
+		version: "0.2.0"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -51192,11 +51500,13 @@ const flags = {
 	source: choice("source", [
 		"auto",
 		"launch",
-		"cdp",
+		"chrome",
 		"agent-browser",
-		"playwriter"
-	]).pipe(withDescription$2("Where the page lives. auto: launch a browser when <url> is given, otherwise attach to agent-browser. playwriter: your own Chrome via the Playwriter extension"), withDefault("auto")),
+		"playwriter",
+		"cdp"
+	]).pipe(withDescription$2("Where the page lives. launch: a headless installed Chrome. chrome: your everyday Chrome (enable chrome://inspect/#remote-debugging). agent-browser / playwriter / cdp: attach to that browser. auto: launch when <url> is given, otherwise agent-browser, then chrome"), withDefault("auto")),
 	cdp: optionalString("cdp", "CDP endpoint to attach to (http://host:port or ws://…); implies --source cdp"),
+	chromeUserDataDir: optionalString("chrome-user-data-dir", "Chrome user data directory for --source chrome (default: the platform's Google Chrome profile root)"),
 	playwriterEndpoint: string$2("playwriter-endpoint").pipe(withDescription$2("Playwriter relay CDP endpoint"), withDefault("http://127.0.0.1:19988")),
 	tab: optionalString("tab", "Attached browsers: capture the tab whose URL or title contains this text (default: the visible tab)"),
 	agentBrowserBin: string$2("agent-browser-bin").pipe(withDescription$2("agent-browser executable"), withDefault("agent-browser")),
@@ -51276,7 +51586,9 @@ const encodeSummary = encodeEffect(fromJsonString(Struct({
 	out: NullOr(String$1),
 	clipboard: Boolean$2
 })));
-const resolveSource = (input) => gen(function* () {
+const chromeUserDataDir = (home, localAppData) => value(process.platform).pipe(when("darwin", () => `${home}/Library/Application Support/Google/Chrome`), when("win32", () => `${localAppData}\\Google\\Chrome\\User Data`), orElse(() => `${home}/.config/google-chrome`));
+/** Sources to try in order; auto without a URL attaches to whatever the user or agent is driving. */
+const resolveSources = (input, home, localAppData) => gen(function* () {
 	const source = isSome(input.cdp) && input.source === "auto" ? "cdp" : input.source;
 	const launch = Source.Launch({
 		executablePath: input.browser,
@@ -51288,15 +51600,24 @@ const resolveSource = (input) => gen(function* () {
 		bin: input.agentBrowserBin,
 		session: input.agentBrowserSession
 	});
-	if (source === "launch") return launch;
-	if (source === "agent-browser") return agentBrowser;
-	if (source === "playwriter") return Source.Playwriter({ endpoint: input.playwriterEndpoint });
+	const chrome = Source.Chrome({ userDataDir: getOrElse(input.chromeUserDataDir, () => chromeUserDataDir(home, localAppData)) });
+	if (source === "launch") return [launch];
+	if (source === "chrome") return [chrome];
+	if (source === "agent-browser") return [agentBrowser];
+	if (source === "playwriter") return [Source.Playwriter({ endpoint: input.playwriterEndpoint })];
 	if (source === "cdp") {
 		if (isNone(input.cdp)) return yield* new BrowserError({ message: "--source cdp needs --cdp <endpoint>" });
-		return Source.Attach({ endpoint: input.cdp.value });
+		return [Source.Attach({ endpoint: input.cdp.value })];
 	}
-	return isSome(input.url) ? launch : agentBrowser;
+	return isSome(input.url) ? [launch] : [agentBrowser, chrome];
 });
+/** Opens the first source that works; the error lists why each one failed. */
+const openFirst = (browser, sources, settings, freshTab) => {
+	const [first, ...rest] = sources;
+	if (first === void 0) return fail$2(new BrowserError({ message: "No browser source" }));
+	const attempt = browser.open(first, settings, freshTab);
+	return rest.length === 0 ? attempt : attempt.pipe(catch_((error) => openFirst(browser, rest, settings, freshTab).pipe(mapError((next) => new BrowserError({ message: `${first._tag}: ${error.message}; ${next.message}` })))));
+};
 const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 	const fs = yield* FileSystem;
 	const path = yield* Path$1;
@@ -51312,14 +51633,15 @@ const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 		refresh: input.refreshExtension
 	});
 	yield* logDebug(`Paper Snapshot ${serializer.version} from ${serializer.origin}`);
-	const source = yield* resolveSource(input);
+	const localAppData = yield* string$5("LOCALAPPDATA").pipe(withDefault$2(""));
+	const sources = yield* resolveSources(input, home, localAppData);
 	const browser = yield* Service$2;
 	const viewport = isNone(input.width) && isNone(input.height) ? none() : some({
 		width: getOrElse(input.width, () => 1440),
 		height: getOrElse(input.height, () => 900)
 	});
 	const snapshot = yield* scoped(gen(function* () {
-		const session = yield* browser.open(source, {
+		const session = yield* openFirst(browser, sources, {
 			viewport,
 			scale: input.scale,
 			colorScheme: input.colorScheme,
@@ -51411,6 +51733,10 @@ const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 		description: "Capture the tab agent-browser is showing"
 	},
 	{
+		command: "paper-snap --source chrome --tab localhost:3000",
+		description: "Capture a tab of your everyday Chrome (remote debugging enabled)"
+	},
+	{
 		command: "paper-snap --source playwriter --tab localhost:3000",
 		description: "Capture a tab of your own Chrome through the Playwriter extension"
 	},
@@ -51427,7 +51753,7 @@ const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 //#region src/bin.ts
 const LoggerLive = mergeAll(layer$4([consolePretty({ stderr: true })]), succeed$3(LogToStderr, true));
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run(command, { version: "0.1.0" }).pipe(tapError((error) => error$1(`paper-snap: ${error.message}`)), provide(MainLive), runMain({
+run(command, { version: "0.2.0" }).pipe(tapError((error) => error$1(`paper-snap: ${error.message}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);

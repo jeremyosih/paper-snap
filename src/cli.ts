@@ -4,9 +4,11 @@ import * as Console from "effect/Console";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
+import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
+import type * as Scope from "effect/Scope";
 import * as Argument from "effect/unstable/cli/Argument";
 import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
@@ -35,15 +37,26 @@ const flags = {
   ),
 
   // Source browser
-  source: Flag.choice("source", ["auto", "launch", "cdp", "agent-browser", "playwriter"]).pipe(
+  source: Flag.choice("source", [
+    "auto",
+    "launch",
+    "chrome",
+    "agent-browser",
+    "playwriter",
+    "cdp",
+  ]).pipe(
     Flag.withDescription(
-      "Where the page lives. auto: launch a browser when <url> is given, otherwise attach to agent-browser. playwriter: your own Chrome via the Playwriter extension",
+      "Where the page lives. launch: a headless installed Chrome. chrome: your everyday Chrome (enable chrome://inspect/#remote-debugging). agent-browser / playwriter / cdp: attach to that browser. auto: launch when <url> is given, otherwise agent-browser, then chrome",
     ),
     Flag.withDefault("auto"),
   ),
   cdp: optionalString(
     "cdp",
     "CDP endpoint to attach to (http://host:port or ws://…); implies --source cdp",
+  ),
+  chromeUserDataDir: optionalString(
+    "chrome-user-data-dir",
+    "Chrome user data directory for --source chrome (default: the platform's Google Chrome profile root)",
   ),
   playwriterEndpoint: Flag.string("playwriter-endpoint").pipe(
     Flag.withDescription("Playwriter relay CDP endpoint"),
@@ -213,7 +226,15 @@ const Summary = Schema.Struct({
 
 const encodeSummary = Schema.encodeEffect(Schema.fromJsonString(Summary));
 
-const resolveSource = (input: Input) =>
+const chromeUserDataDir = (home: string, localAppData: string) =>
+  Match.value(process.platform).pipe(
+    Match.when("darwin", () => `${home}/Library/Application Support/Google/Chrome`),
+    Match.when("win32", () => `${localAppData}\\Google\\Chrome\\User Data`),
+    Match.orElse(() => `${home}/.config/google-chrome`),
+  );
+
+/** Sources to try in order; auto without a URL attaches to whatever the user or agent is driving. */
+const resolveSources = (input: Input, home: string, localAppData: string) =>
   Effect.gen(function* () {
     const source = Option.isSome(input.cdp) && input.source === "auto" ? "cdp" : input.source;
 
@@ -229,22 +250,60 @@ const resolveSource = (input: Input) =>
       session: input.agentBrowserSession,
     });
 
-    if (source === "launch") return launch;
+    const chrome = Browser.Source.Chrome({
+      userDataDir: Option.getOrElse(input.chromeUserDataDir, () =>
+        chromeUserDataDir(home, localAppData),
+      ),
+    });
 
-    if (source === "agent-browser") return agentBrowser;
+    if (source === "launch") return [launch];
+
+    if (source === "chrome") return [chrome];
+
+    if (source === "agent-browser") return [agentBrowser];
 
     if (source === "playwriter")
-      return Browser.Source.Playwriter({ endpoint: input.playwriterEndpoint });
+      return [Browser.Source.Playwriter({ endpoint: input.playwriterEndpoint })];
 
     if (source === "cdp") {
       if (Option.isNone(input.cdp))
         return yield* new Browser.BrowserError({ message: "--source cdp needs --cdp <endpoint>" });
 
-      return Browser.Source.Attach({ endpoint: input.cdp.value });
+      return [Browser.Source.Attach({ endpoint: input.cdp.value })];
     }
 
-    return Option.isSome(input.url) ? launch : agentBrowser;
+    return Option.isSome(input.url) ? [launch] : [agentBrowser, chrome];
   });
+
+/** Opens the first source that works; the error lists why each one failed. */
+const openFirst = (
+  browser: Browser.Interface,
+  sources: ReadonlyArray<Browser.Source>,
+  settings: Browser.PageSettings,
+  freshTab: boolean,
+): Effect.Effect<Browser.Session, Browser.BrowserError, Scope.Scope> => {
+  const [first, ...rest] = sources;
+
+  if (first === undefined)
+    return Effect.fail(new Browser.BrowserError({ message: "No browser source" }));
+
+  const attempt = browser.open(first, settings, freshTab);
+
+  return rest.length === 0
+    ? attempt
+    : attempt.pipe(
+        Effect.catch((error) =>
+          openFirst(browser, rest, settings, freshTab).pipe(
+            Effect.mapError(
+              (next) =>
+                new Browser.BrowserError({
+                  message: `${first._tag}: ${error.message}; ${next.message}`,
+                }),
+            ),
+          ),
+        ),
+      );
+};
 
 const handler = Effect.fn("paper-snap")(function* (input: Input) {
   const fs = yield* FileSystem.FileSystem;
@@ -277,7 +336,8 @@ const handler = Effect.fn("paper-snap")(function* (input: Input) {
 
   yield* Effect.logDebug(`Paper Snapshot ${serializer.version} from ${serializer.origin}`);
 
-  const source = yield* resolveSource(input);
+  const localAppData = yield* Config.string("LOCALAPPDATA").pipe(Config.withDefault(""));
+  const sources = yield* resolveSources(input, home, localAppData);
   const browser = yield* Browser.Service;
 
   const viewport =
@@ -290,8 +350,9 @@ const handler = Effect.fn("paper-snap")(function* (input: Input) {
 
   const snapshot = yield* Effect.scoped(
     Effect.gen(function* () {
-      const session = yield* browser.open(
-        source,
+      const session = yield* openFirst(
+        browser,
+        sources,
         {
           viewport,
           scale: input.scale,
@@ -418,6 +479,10 @@ export const command = Command.make("paper-snap", flags, handler).pipe(
       description: "One element of a local dev server, mobile viewport",
     },
     { command: "paper-snap", description: "Capture the tab agent-browser is showing" },
+    {
+      command: "paper-snap --source chrome --tab localhost:3000",
+      description: "Capture a tab of your everyday Chrome (remote debugging enabled)",
+    },
     {
       command: "paper-snap --source playwriter --tab localhost:3000",
       description: "Capture a tab of your own Chrome through the Playwriter extension",
