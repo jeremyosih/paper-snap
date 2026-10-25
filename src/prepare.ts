@@ -199,7 +199,25 @@ export const fixColspans = (page: Page) =>
           [...row.cells].map((cell) => cell.getBoundingClientRect().width),
         );
 
-        const touched = [table, ...sections, ...rows, ...rows.flatMap((row) => [...row.cells])];
+        // Badges and other inline content would stretch to the full width of a block cell.
+        const inlines = rows
+          .flatMap((row) => [...row.cells])
+          .flatMap((cell) => [...cell.children])
+          .filter(
+            (child): child is HTMLElement =>
+              child instanceof HTMLElement && getComputedStyle(child).display.startsWith("inline"),
+          );
+
+        const inlineWidths = inlines.map((child) => child.getBoundingClientRect().width);
+
+        const touched = [
+          table,
+          ...sections,
+          ...rows,
+          ...rows.flatMap((row) => [...row.cells]),
+          ...inlines,
+        ];
+
         const before = touched.map((element) => element.getAttribute("style"));
 
         log.push(() =>
@@ -232,6 +250,14 @@ export const fixColspans = (page: Page) =>
             cell.style.setProperty("box-sizing", "border-box");
             cell.style.setProperty("width", `${cellWidths[rowIndex]?.[cellIndex] ?? 0}px`);
           });
+        });
+
+        inlines.forEach((child, index) => {
+          if (getComputedStyle(child).display === "inline") {
+            child.style.setProperty("display", "inline-block");
+          }
+
+          child.style.setProperty("width", `${inlineWidths[index] ?? 0}px`);
         });
       }
 

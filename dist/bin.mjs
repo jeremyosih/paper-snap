@@ -37121,11 +37121,14 @@ const fixColspans = (page) => step$1("colspans", () => page.evaluate(() => {
 		const tableWidth = table.getBoundingClientRect().width;
 		const rowWidths = rows.map((row) => row.getBoundingClientRect().width);
 		const cellWidths = rows.map((row) => [...row.cells].map((cell) => cell.getBoundingClientRect().width));
+		const inlines = rows.flatMap((row) => [...row.cells]).flatMap((cell) => [...cell.children]).filter((child) => child instanceof HTMLElement && getComputedStyle(child).display.startsWith("inline"));
+		const inlineWidths = inlines.map((child) => child.getBoundingClientRect().width);
 		const touched = [
 			table,
 			...sections,
 			...rows,
-			...rows.flatMap((row) => [...row.cells])
+			...rows.flatMap((row) => [...row.cells]),
+			...inlines
 		];
 		const before = touched.map((element) => element.getAttribute("style"));
 		log.push(() => touched.forEach((element, index) => {
@@ -37150,6 +37153,10 @@ const fixColspans = (page) => step$1("colspans", () => page.evaluate(() => {
 				cell.style.setProperty("box-sizing", "border-box");
 				cell.style.setProperty("width", `${cellWidths[rowIndex]?.[cellIndex] ?? 0}px`);
 			});
+		});
+		inlines.forEach((child, index) => {
+			if (getComputedStyle(child).display === "inline") child.style.setProperty("display", "inline-block");
+			child.style.setProperty("width", `${inlineWidths[index] ?? 0}px`);
 		});
 	}
 	return tables.size;
@@ -54760,7 +54767,7 @@ const NodeInfo = fromJsonString(Struct({
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snapshot",
-		version: "0.1.1"
+		version: "0.1.2"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -55415,7 +55422,7 @@ const command = make$3("paper-snapshot", flags, run).pipe(withDescription("Snaps
 //#region src/bin.ts
 const LoggerLive = mergeAll(layer$4([consolePretty()]), succeed$3(LogToStderr, true));
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.1.1" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.1.2" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);

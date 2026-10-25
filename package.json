@@ -1,6 +1,6 @@
 {
   "name": "paper-snapshot-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Paper Snapshot as a CLI. Copy and paste your real site directly into Paper as editable layers. No more screenshots.",
   "keywords": [
     "ai-agents",
