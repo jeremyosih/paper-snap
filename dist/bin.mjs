@@ -8061,7 +8061,7 @@ const isLogLevelGreaterThan = /*#__PURE__*/ isGreaterThan$1(/* @__PURE__ */ mapI
 /** @internal */
 const CurrentLoggers$1 = /*#__PURE__*/ Reference("effect/Loggers/CurrentLoggers", { defaultValue: () => /* @__PURE__ */ new Set([defaultLogger, tracerLogger]) });
 /** @internal */
-const LogToStderr = /*#__PURE__*/ Reference("effect/Logger/LogToStderr", { defaultValue: constFalse });
+const LogToStderr$1 = /*#__PURE__*/ Reference("effect/Logger/LogToStderr", { defaultValue: constFalse });
 const LoggerProto = {
 	["~effect/Logger"]: {
 		_Message: identity,
@@ -8193,7 +8193,7 @@ const prettyLoggerTty = (options) => {
 	const color = options.colors ? withColor : withColorNoop;
 	return loggerMake(({ cause, date, fiber, logLevel, message: message_ }) => {
 		const console = fiber.getRef(ConsoleRef);
-		const log = fiber.getRef(LogToStderr) ? console.error : console.log;
+		const log = fiber.getRef(LogToStderr$1) ? console.error : console.log;
 		const message = Array.isArray(message_) ? message_.slice() : [message_];
 		let firstLine = color(`[${options.formatDate(date)}]`, colors.white) + ` ${color(logLevel.toUpperCase(), ...logLevelColors[logLevel])} (#${fiber.id})`;
 		const now = date.getTime();
@@ -8263,7 +8263,7 @@ const defaultLogger = /*#__PURE__*/ loggerMake(({ cause, date, fiber, logLevel, 
 	const annotations = fiber.getRef(CurrentLogAnnotations);
 	if (Object.keys(annotations).length > 0) message_.push(annotations);
 	const console = fiber.getRef(ConsoleRef);
-	(fiber.getRef(LogToStderr) ? console.error : console.log)(`[${defaultDateFormat(date)}] ${logLevel.toUpperCase()} (#${fiber.id})${spanString}:`, ...message_);
+	(fiber.getRef(LogToStderr$1) ? console.error : console.log)(`[${defaultDateFormat(date)}] ${logLevel.toUpperCase()} (#${fiber.id})${spanString}:`, ...message_);
 });
 /** @internal */
 const tracerLogger = /*#__PURE__*/ loggerMake(({ cause, fiber, logLevel, message }) => {
@@ -24888,6 +24888,28 @@ const log = (...args) => consoleWith((console) => sync$1(() => {
 * @since 4.0.0
 */
 const CurrentLoggers = CurrentLoggers$1;
+/**
+* Context reference that routes the built-in default logger and TTY pretty
+* console logger to stderr.
+*
+* **When to use**
+*
+* Use to route built-in logger output to stderr while keeping stdout reserved
+* for protocol messages or data output.
+*
+* **Details**
+*
+* The reference defaults to `false`. Providing `true` makes the affected
+* loggers call `console.error` instead of `console.log`.
+*
+* @see {@link defaultLogger} for the runtime logger affected by this reference
+* @see {@link consolePretty} for the TTY-mode pretty console logger affected by this reference
+* @see {@link withConsoleError} for routing a specific formatter logger to `console.error`
+*
+* @category services
+* @since 4.0.0
+*/
+const LogToStderr = LogToStderr$1;
 /**
 * A `Logger` which outputs logs in a "pretty" format and writes them to the
 * console.
@@ -51403,7 +51425,7 @@ const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 ]));
 //#endregion
 //#region src/bin.ts
-const LoggerLive = layer$4([consolePretty({ stderr: true })]);
+const LoggerLive = mergeAll(layer$4([consolePretty({ stderr: true })]), succeed$3(LogToStderr, true));
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
 run(command, { version: "0.1.0" }).pipe(tapError((error) => error$1(`paper-snap: ${error.message}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,

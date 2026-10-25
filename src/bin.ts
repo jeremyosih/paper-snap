@@ -14,7 +14,10 @@ import * as Extension from "./extension.ts";
 import * as Paper from "./paper.ts";
 
 // Logs go to stderr so `--out -` and `--json` keep stdout machine-readable.
-const LoggerLive = Logger.layer([Logger.consolePretty({ stderr: true })]);
+const LoggerLive = Layer.mergeAll(
+  Logger.layer([Logger.consolePretty({ stderr: true })]),
+  Layer.succeed(Logger.LogToStderr, true),
+);
 
 const MainLive = Layer.mergeAll(
   Browser.layer,
