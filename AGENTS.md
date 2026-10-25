@@ -10,4 +10,6 @@ Headless Paper Snapshot: an Effect v4 CLI that captures a page with the Paper Sn
 - Lint and format config lives in `vite.config.ts`. Anti-slop provenance is in `tools/oxlint/anti-slop/UPSTREAM.md`; fix violations rather than suppressing them. Use the [install-anti-slop skill](.agents/skills/install-anti-slop/SKILL.md) to update it.
 - `skills/paper-snap/SKILL.md` is the user-facing agent skill. Edit it when flags or workflows change.
 
-Run `bun run check` after changes: formatting, anti-slop lint, TypeScript with Effect diagnostics, and Knip. `bun run build` bundles `dist/bin.mjs`; `bun run dev -- <args>` runs from source.
+After cloning, run `bun install && bun run setup` (patches TypeScript with Effect diagnostics, installs git hooks).
+
+Run `bun run check` after changes: formatting, anti-slop lint, TypeScript with Effect diagnostics, and Knip. `dist/bin.mjs` is committed so `npm install -g github:jeremyosih/paper-snap` works without a build step: run `bun run build` and commit `dist/` with every source change. `bun run dev -- <args>` runs from source.

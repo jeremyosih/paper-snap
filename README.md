@@ -41,9 +41,9 @@ Every behaviour is a flag: viewport, color scheme, headers, timeouts, scrolling,
 ## Development
 
 ```sh
-bun install
+bun install && bun run setup
 bun run check     # oxfmt + oxlint/anti-slop (vite-plus), tsc with Effect diagnostics, knip
-bun run build     # dist/bin.mjs
+bun run build     # dist/bin.mjs (committed, so git installs need no build)
 bun run dev -- https://example.com --out -
 ```
 

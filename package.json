@@ -35,7 +35,7 @@
     "knip": "knip",
     "staged": "vp staged",
     "hooks:setup": "vp config",
-    "prepare": "effect-tsgo patch && vp pack"
+    "setup": "effect-tsgo patch && vp config"
   },
   "dependencies": {
     "@effect/platform-node": "4.0.0-rc.112",
