@@ -1,56 +1,111 @@
 # paper-snapshot
 
-Snapshot any URL, local dev server, or live browser tab into [Paper](https://paper.design) as editable layers, from the command line. It does what the [Paper Snapshot](https://paper.design/snapshot-extension) extension does, but headlessly, so coding agents can do it too.
+Put your real site into Paper as editable layers, from the command line. No more screenshots.
 
-```sh
-paper-snapshot https://linear.app                                    # whole page → new artboard
-paper-snapshot http://localhost:3000 -s "#pricing" --width 390       # one element, mobile width
-paper-snapshot http://localhost:3000/ /pricing /settings             # several screens in a row
-paper-snapshot --manifest screens.json --json                        # a batch, one JSON line each
-paper-snapshot http://localhost:3000/settings --replace 1A-0         # refresh an existing artboard
-paper-snapshot http://localhost:3000 --local-storage theme=dark      # app state without scripting
-paper-snapshot                                                       # the tab agent-browser is on
-paper-snapshot --source chrome --tab localhost:3000                  # a tab in your everyday Chrome
-```
+Give paper-snapshot a URL, a local dev server, or a tab an agent already clicked its way to. It
+loads the page, captures it (or a single element) with [Paper Snapshot](https://paper.design/snapshot-extension)'s
+own serializer, and writes the result into the Paper file you have open as a new artboard: real
+text, real layout, real colors and images, every layer editable. It is the Paper Snapshot
+extension without the clicking, so an agent can bring a whole app into Paper in one command and
+refresh any screen when the app changes.
 
 ## Install
 
+paper-snapshot needs Node 22 or later, the [Paper](https://paper.design/downloads) app running
+(for pushing into a file), and a Chromium-based browser. An installed Chrome, Edge, Brave or
+Chromium is found automatically; with none, a headless Chromium is downloaded once.
+
 ```sh
 npm install -g https://github.com/jeremyosih/paper-snapshot/tarball/main
-npx skills add jeremyosih/paper-snapshot --skill paper-snapshot -g   # the agent skill
 ```
 
-Requirements: Node 22+, the Paper app running (for pushing), and a Chromium-based browser. Installed Chrome, Edge, Brave and Chromium are found automatically; if none is installed, a headless Chromium is downloaded once.
+The first run downloads the Paper Snapshot extension from the Chrome Web Store and caches it in
+`~/.cache/paper-snapshot`. Nothing from Paper ships in this repository.
 
-## How it works
+## Agents
 
-1. **Serializer.** On first run, paper-snapshot downloads the Paper Snapshot extension from the Chrome Web Store and caches it in `~/.cache/paper-snapshot`. It evaluates the extension's scripts in a sandbox and extracts the function that turns a DOM element into Paper's snapshot HTML (computed styles inlined, pseudo-elements, SVG, canvas and video frames, form state). The function is found by behaviour, not by name, so extension updates keep working. Nothing from Paper is bundled here.
-2. **Page.** The page is loaded, given its state (cookies, storage, clicks), and scrolled so lazy content renders. Before serializing, a few passes make it import cleanly, and are undone afterwards:
-   - the viewport grows until no internal scroll container clips content (`h-screen` app shells);
-   - external SVG sprites (`<use href="/sprite.svg#icon">`) are inlined with their computed colors;
-   - tables with `colspan` cells are frozen into flex rows at their rendered widths;
-   - image heights are pinned, since Paper's importer does not infer aspect ratios;
-   - images on private hosts are inlined as data URIs, since Paper cannot fetch them.
+Install the agent skill for Claude Code, OpenCode, Codex and other agents:
 
-   Anything that still won't import well is counted in the `warnings` of the `--json` output.
+```sh
+npx skills add jeremyosih/paper-snapshot --skill paper-snapshot -g
+```
 
-3. **Paper.** The HTML goes into a new artboard through the MCP relay that ships with the Paper app (`~/.paper/bin/paper mcp`). `--clipboard` instead writes the exact payload the extension writes, for a manual ⌘V.
+With the skill, an agent picks the source (a URL, or the browser it drove), sets up state such as
+sign-in, theme and open menus with flags instead of scripts, places the artboards, and runs with
+`--json`. Each capture prints one line with the artboard id, position, size and `warnings`, a count
+of anything that won't import cleanly, so the agent can screenshot the artboards that need a look
+and report the rest. The skill also tells the agent which steps wait on you, such as Chrome's
+**Allow** dialog, so you hear about them before the command blocks.
 
-## Browser sources
+## Usage
 
-| `--source`      | Page comes from                                                                                                         |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `chrome`        | Your everyday Chrome once `chrome://inspect/#remote-debugging` is on (Chrome 144+); Chrome asks you to Allow each run   |
-| `launch`        | A headless installed Chrome (default when a URL is given)                                                               |
-| `agent-browser` | The tab [agent-browser](https://github.com/vercel-labs/agent-browser) is driving (default without a URL, then `chrome`) |
-| `playwriter`    | Your own Chrome via the [Playwriter](https://github.com/remorses/playwriter) extension                                  |
-| `cdp`           | Any Chrome DevTools Protocol endpoint (`--cdp`)                                                                         |
+```sh
+# A whole page, into the Paper file you have open
+paper-snapshot https://linear.app
 
-Attaching lets an agent click, type and log in first, then capture exactly that state. Attached browsers are left running. With `--source chrome`, each run waits (up to `--chrome-approval-timeout`, 2 min) for you to click **Allow** in Chrome's "Allow remote debugging?" dialog; Cancel fails the run. When Chrome's `DevToolsActivePort` file can't be read (macOS may hide it from some apps), paper-snapshot connects to `127.0.0.1:9222` (`--chrome-port`).
+# One element of a local dev server, at phone size
+paper-snapshot http://localhost:3000 -s "#pricing" --width 390 --height 844
+
+# Several screens side by side (paths resolve against the first URL)
+paper-snapshot http://localhost:3000/ /pricing /settings --layout row
+
+# A batch from a manifest, one JSON line per artboard
+paper-snapshot --manifest screens.json --json
+
+# Refresh an existing artboard after the app changed (same id, position and name)
+paper-snapshot http://localhost:3000/settings --replace 1A-0
+
+# App state without scripting: dark theme kept in storage, a session cookie, an open menu
+paper-snapshot http://localhost:3000 --local-storage theme=dark --color-scheme dark \
+  --cookie "session=…" --click "[data-testid=account-menu]"
+
+# The tab agent-browser is on, after it logged in and opened a dialog
+paper-snapshot
+
+# A tab in your everyday Chrome (click Allow when Chrome asks)
+paper-snapshot --source chrome --tab localhost:3000
+
+# Just the HTML, or the extension's exact clipboard payload for a manual ⌘V
+paper-snapshot https://example.com --out snap.html
+paper-snapshot https://example.com --clipboard
+```
+
+Every behaviour is a flag with a default: viewport, color scheme, page state, timeouts, scrolling,
+fidelity passes, and the target file, page and position in Paper. `paper-snapshot --help` lists
+them all.
+
+## Browsers
+
+Pages come from one of five places, chosen with `--source`:
+
+| Source          | Page comes from                                                                                             | What you do                                                                         |
+| --------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `launch`        | A headless copy of your installed Chrome. The default when a URL is given                                   | Nothing                                                                             |
+| `agent-browser` | The tab [agent-browser](https://github.com/vercel-labs/agent-browser) is driving. The default without a URL | Keep an agent-browser session open                                                  |
+| `chrome`        | Your everyday Chrome, with your logins. Tried after agent-browser when no URL is given                      | Turn on `chrome://inspect/#remote-debugging` once, then click **Allow** on each run |
+| `playwriter`    | Your Chrome through the [Playwriter](https://github.com/remorses/playwriter) extension                      | Connect the extension to its relay                                                  |
+| `cdp`           | Any Chrome DevTools Protocol endpoint (`--cdp`)                                                             | Start that browser with remote debugging                                            |
+
+Attaching lets an agent click, type and sign in first, then capture exactly that state. Attached
+browsers are never closed. Passing a URL while attached opens a temporary tab and closes it after;
+without a URL, `--tab <text>` picks the tab whose URL or title contains the text, and otherwise
+the visible one.
+
+With `--source chrome`, Chrome shows **Allow remote debugging?** each time paper-snapshot connects,
+on the machine Chrome runs on, and keeps a "controlled by automated test software" banner up while
+it's attached. The command waits for you, up to `--chrome-approval-timeout` (2 minutes); **Cancel**
+fails it. A batch connects once, so it asks once. paper-snapshot reads Chrome's port from its
+`DevToolsActivePort` file; when macOS hides that file from the calling app, it connects to
+`127.0.0.1:9222` instead (`--chrome-port`).
 
 ## Batches and placement
 
-Several URLs, or a `--manifest` JSON file, run as one batch: one browser, one Paper connection, one JSON line per artboard, and failures reported per capture without stopping the rest. Manifest items are a URL string or an object whose fields mirror the flags in camelCase; `{ "defaults": {…}, "items": […] }` sets shared fields.
+Several URLs, or a `--manifest` JSON file, run as one batch over one browser and one Paper
+connection. Each capture prints its own JSON line, and a failed capture prints
+`{"index", "url", "error"}` without stopping the rest; the exit code is 1 if any failed.
+
+A manifest item is a URL, or an object whose fields mirror the flags in camelCase.
+`{ "defaults": {…}, "items": […] }` shares fields:
 
 ```json
 {
@@ -68,20 +123,56 @@ Several URLs, or a `--manifest` JSON file, run as one batch: one browser, one Pa
 }
 ```
 
-Artboards are laid out with `--layout row|column|grid` (`--columns`, `--gap`) from the first one's position. `--x/--y`, `--below <id>` or `--right-of <id>` anchor that first artboard. `--replace <id>` refreshes an existing artboard in place, keeping its id, position and name.
+New artboards follow `--layout row|column|grid` (with `--columns` and `--gap`) from the first
+one, which `--x/--y`, `--below <artboardId>` or `--right-of <artboardId>` anchor. Without an
+anchor, Paper picks an empty spot. `--replace <artboardId>` re-captures into an existing artboard
+and keeps its id, position and name; `--file-id` and `--page-id` choose where new ones go.
 
-Every behaviour is a flag: viewport, color scheme, page state, headers, timeouts, scrolling, fidelity passes, the target file, page and position in Paper. See `paper-snapshot --help`.
+## Fidelity
+
+Before serializing, paper-snapshot adjusts the page so it imports the way it renders, and undoes
+every change afterwards:
+
+| Problem                                                                      | What paper-snapshot does                                           | Flag                  |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------- |
+| App shells (`h-screen` with an `overflow: auto` main) cut off below the fold | Grows the viewport until no scroll container clips                 | `--full-page`         |
+| Icons from external SVG sprites import empty                                 | Fetches the sprite and inlines the symbol with its computed colors | `--inline-sprites`    |
+| A `colspan` cell imports one column wide                                     | Freezes the table into rows and cells at their rendered widths     | `--fix-colspans`      |
+| `height: auto` images collapse                                               | Pins rendered image heights                                        | `--pin-image-heights` |
+| Paper can't fetch images from localhost                                      | Inlines them as data URIs                                          | `--inline-images`     |
+
+Each pass is on by default; `--no-<flag>` turns one off. Whatever still won't import cleanly is
+counted in the `warnings` of each JSON line: `emptySvgs`, `unresolvedSprites`,
+`clippedScrollContainers`, `unresolvedImages` and `lostColspans`.
+
+`--color-scheme` only flips the `prefers-color-scheme` media query. Apps that keep their theme in
+storage also need `--local-storage <key>=dark`.
+
+## How it works
+
+The Paper Snapshot extension walks the element you pick, keeps only the computed styles that
+differ from the browser's defaults, folds in pseudo-elements, canvas and video frames, form state
+and same-document SVG references, and copies the resulting HTML to the clipboard wrapped in
+`<x-paper-html>`. Paper turns that paste into layers.
+
+paper-snapshot downloads the extension from the Chrome Web Store, evaluates its scripts in a
+sandbox, and finds that serializer by what it does, not by its minified name, so new releases of
+the extension keep working. It runs the serializer in the page through the Chrome DevTools
+Protocol, then writes the HTML into a new artboard through the MCP relay that ships with the Paper
+app (`~/.paper/bin/paper mcp`). `--clipboard` writes the extension's exact clipboard payload
+instead.
 
 ## Development
 
 ```sh
-bun install && bun run setup
-bun run check     # oxfmt + oxlint/anti-slop (vite-plus), tsc with Effect diagnostics, knip
-bun run build     # dist/bin.mjs (committed, so git installs need no build)
+bun install && bun run setup   # dependencies, Effect diagnostics for TypeScript, git hooks
+bun run check                  # oxfmt and oxlint with anti-slop (vite-plus), tsc with Effect diagnostics, knip
+bun run build                  # dist/bin.mjs, committed so installs from GitHub need no build
 bun run dev -- https://example.com --out -
 ```
 
-Built with [Effect](https://effect.website) v4 and its CLI module. Paper Snapshot and Paper are products of Paper; this project is unaffiliated.
+Built with [Effect](https://effect.website) 4 and its CLI module. Paper and Paper Snapshot are
+products of Paper; this project is not affiliated with them.
 
 ## License
 

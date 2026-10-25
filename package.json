@@ -1,16 +1,20 @@
 {
   "name": "paper-snapshot",
   "version": "0.4.1",
-  "description": "Headless Paper Snapshot: snapshot any URL or local dev server into Paper as editable layers",
+  "description": "Put your real site into Paper as editable layers, from the command line. No more screenshots.",
   "keywords": [
-    "agent",
+    "ai-agents",
+    "claude-code",
     "cli",
+    "coding-agents",
+    "design-tools",
     "effect",
     "paper",
-    "paper.design",
-    "playwright",
+    "paper-design",
+    "paper-snapshot",
     "snapshot"
   ],
+  "homepage": "https://github.com/jeremyosih/paper-snapshot#readme",
   "license": "MIT",
   "repository": {
     "type": "git",
