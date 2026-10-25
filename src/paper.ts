@@ -75,7 +75,9 @@ export interface Interface {
   readonly connect: (settings: Settings) => Effect.Effect<Connection, PaperError, Scope.Scope>;
 }
 
-export class Service extends Context.Service<Service, Interface>()("paper-snap/paper/Service") {}
+export class Service extends Context.Service<Service, Interface>()(
+  "paper-snapshot/paper/Service",
+) {}
 
 const TextBlock = Schema.Struct({ type: Schema.Literal("text"), text: Schema.String });
 
@@ -121,7 +123,7 @@ export const layer = Layer.succeed(
   Service,
   Service.of({
     connect: Effect.fn("Paper.connect")(function* (settings: Settings) {
-      const client = new Client({ name: "paper-snap", version: "0.3.0" });
+      const client = new Client({ name: "paper-snapshot", version: "0.4.0" });
       yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: () =>

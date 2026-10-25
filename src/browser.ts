@@ -88,7 +88,9 @@ export interface Interface {
   ) => Effect.Effect<Handle, BrowserError, Scope.Scope>;
 }
 
-export class Service extends Context.Service<Service, Interface>()("paper-snap/browser/Service") {}
+export class Service extends Context.Service<Service, Interface>()(
+  "paper-snapshot/browser/Service",
+) {}
 
 const defaultViewport: Viewport = { width: 1440, height: 900 };
 

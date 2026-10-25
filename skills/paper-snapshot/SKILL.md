@@ -1,19 +1,19 @@
 ---
-name: paper-snap
+name: paper-snapshot
 description: Snapshot web UI into Paper as editable layers. Use when a URL, local dev server, set of app screens, or live browser state should land in a Paper file, or when Paper artboards need refreshing from the app.
 ---
 
-# paper-snap
+# paper-snapshot
 
-`paper-snap` serializes pages with Paper Snapshot's own serializer and writes each as an artboard into the file open in the Paper app. Every behaviour is a flag; `paper-snap --help` is the reference.
+`paper-snapshot` serializes pages with Paper Snapshot's own serializer and writes each as an artboard into the file open in the Paper app. Every behaviour is a flag; `paper-snapshot --help` is the reference.
 
 ## Steps
 
 1. **Pick the source.**
-   - URLs, public or localhost: `paper-snap <url> [<url or /path>…]`. It launches the installed Chrome headlessly.
+   - URLs, public or localhost: `paper-snapshot <url> [<url or /path>…]`. It launches the installed Chrome headlessly.
    - A state that takes interaction to reach and that page-state flags (step 2) cannot set up: get a browser there, then capture its tab without a URL.
-     - agent-browser: `paper-snap` (captures the tab agent-browser is on).
-     - The user's everyday Chrome, also what Chrome DevTools MCP drives with `--autoConnect`: `paper-snap --source chrome --tab <text in the tab's URL or title>`. This needs remote debugging enabled at `chrome://inspect/#remote-debugging`; the user clicks Allow when Chrome asks.
+     - agent-browser: `paper-snapshot` (captures the tab agent-browser is on).
+     - The user's everyday Chrome, also what Chrome DevTools MCP drives with `--autoConnect`: `paper-snapshot --source chrome --tab <text in the tab's URL or title>`. This needs remote debugging enabled at `chrome://inspect/#remote-debugging`; the user clicks Allow when Chrome asks.
      - Playwriter: `--source playwriter --tab <text>`. Any other CDP browser: `--cdp <endpoint>`.
 
 2. **Set up the state.** Sign-in: `--storage-state auth.json`, or `--cookie "name=value"`. Theme and flags that apps keep in storage: `--local-storage key=value` (`--color-scheme dark` alone only flips the media query). Menus and dialogs: `--click <selector>`, repeatable, in order. `--eval` covers anything else.
@@ -29,7 +29,7 @@ description: Snapshot web UI into Paper as editable layers. Use when a URL, loca
 ## Gotchas
 
 - The Paper app must be running: the push goes through its MCP relay at `~/.paper/bin/paper`. `--file-id` and `--page-id` target a specific file and page.
-- Snapshots run to several MB. Let paper-snap carry the HTML; `--out` writes it to disk (a directory for several captures).
+- Snapshots run to several MB. Let paper-snapshot carry the HTML; `--out` writes it to disk (a directory for several captures).
 - Images on localhost and private hosts are inlined automatically because Paper cannot reach them. Use `--inline-images always` for assets behind auth.
 - Sections that animate in on scroll can come out blank: give them time with `--settle 2000`, or force the final state with `--eval`.
 - Attached browsers stay open. Passing a URL while attached opens a temporary tab and closes it afterwards.

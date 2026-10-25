@@ -48,7 +48,7 @@ const decodeAt =
 declare global {
   interface Window {
     /** Undo log kept on the page so restoration survives across separate evaluate calls. */
-    __paperSnapRestore?: Array<() => void>;
+    __paperSnapshotRestore?: Array<() => void>;
   }
 }
 
@@ -56,8 +56,8 @@ declare global {
 export const restore = (page: Page) =>
   step("restore", () =>
     page.evaluate(() => {
-      for (const undo of (window.__paperSnapRestore ?? []).reverse()) undo();
-      delete window.__paperSnapRestore;
+      for (const undo of (window.__paperSnapshotRestore ?? []).reverse()) undo();
+      delete window.__paperSnapshotRestore;
     }),
   ).pipe(Effect.ignore);
 
@@ -113,7 +113,7 @@ export const inlineSprites = Effect.fn("Prepare.inlineSprites")(function* (
         entries.map(([url, text]) => [url, parser.parseFromString(text, "image/svg+xml")]),
       );
 
-      const log = (window.__paperSnapRestore ??= []);
+      const log = (window.__paperSnapshotRestore ??= []);
       let resolved = 0;
       let unresolved = 0;
 
@@ -172,7 +172,7 @@ export const inlineSprites = Effect.fn("Prepare.inlineSprites")(function* (
 export const fixColspans = (page: Page) =>
   step("colspans", () =>
     page.evaluate(() => {
-      const log = (window.__paperSnapRestore ??= []);
+      const log = (window.__paperSnapshotRestore ??= []);
       const tables = new Set<HTMLTableElement>();
 
       for (const cell of document.querySelectorAll<HTMLTableCellElement>("td, th")) {

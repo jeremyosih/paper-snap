@@ -3,7 +3,7 @@
  *
  * The extension is downloaded from the Chrome Web Store on first use and cached; its
  * capture function is located by behaviour, not by its minified name, so new extension
- * releases keep working. No Paper code ships with paper-snap.
+ * releases keep working. No Paper code ships with paper-snapshot.
  */
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
@@ -48,7 +48,7 @@ export interface Interface {
 }
 
 export class Service extends Context.Service<Service, Interface>()(
-  "paper-snap/extension/Service",
+  "paper-snapshot/extension/Service",
 ) {}
 
 const Manifest = Schema.Struct({ version: Schema.String });

@@ -1,4 +1,4 @@
-/** `paper-snap`: every behaviour is a flag; defaults suit a one-shot capture into the open Paper file. */
+/** `paper-snapshot`: every behaviour is a flag; defaults suit a one-shot capture into the open Paper file. */
 import * as Config from "effect/Config";
 import * as Console from "effect/Console";
 import * as Duration from "effect/Duration";
@@ -87,7 +87,7 @@ const flags = {
     Flag.withDescription(
       "Chromium-based executable to launch (default: installed Chrome/Edge/Brave/Chromium)",
     ),
-    Flag.withFallbackConfig(Config.string("PAPER_SNAP_BROWSER")),
+    Flag.withFallbackConfig(Config.string("PAPER_SNAPSHOT_BROWSER")),
     Flag.optional,
   ),
   browserArgs: repeatable("browser-arg", "Extra command-line argument for the launched browser"),
@@ -229,7 +229,7 @@ const flags = {
     false,
     "Re-download the extension instead of using the cached copy",
   ),
-  cacheDir: optionalString("cache-dir", "Cache directory (default ~/.cache/paper-snap)"),
+  cacheDir: optionalString("cache-dir", "Cache directory (default ~/.cache/paper-snapshot)"),
 
   // Outputs
   push: Flag.boolean("push").pipe(
@@ -519,7 +519,7 @@ const slug = (text: string) =>
     .replace(/^-|-$/g, "")
     .slice(0, 60) || "snapshot";
 
-const handler = Effect.fn("paper-snap")(function* (input: Input) {
+const handler = Effect.fn("paper-snapshot")(function* (input: Input) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const home = yield* Config.string("HOME").pipe(Config.withDefault("."));
@@ -550,7 +550,7 @@ const handler = Effect.fn("paper-snap")(function* (input: Input) {
   const cacheDir = Option.getOrElse(input.cacheDir, () =>
     path.join(
       Option.getOrElse(xdgCache, () => path.join(home, ".cache")),
-      "paper-snap",
+      "paper-snapshot",
     ),
   );
 
@@ -798,42 +798,43 @@ const run = (input: Input) => {
     : program;
 };
 
-export const command = Command.make("paper-snap", flags, run).pipe(
+export const command = Command.make("paper-snapshot", flags, run).pipe(
   Command.withDescription(
     "Snapshot URLs, local dev servers, or an already-open browser tab into Paper as editable layers, using the Paper Snapshot extension's serializer.",
   ),
   Command.withExamples([
     {
-      command: "paper-snap https://linear.app",
+      command: "paper-snapshot https://linear.app",
       description: "Whole page into the open Paper file",
     },
     {
-      command: 'paper-snap http://localhost:3000 -s "#pricing" --width 390 --height 844',
+      command: 'paper-snapshot http://localhost:3000 -s "#pricing" --width 390 --height 844',
       description: "One element of a local dev server, mobile viewport",
     },
     {
-      command: "paper-snap http://localhost:3000/ /pricing /settings --layout row",
+      command: "paper-snapshot http://localhost:3000/ /pricing /settings --layout row",
       description: "Several screens side by side",
     },
     {
-      command: "paper-snap --manifest screens.json --json",
+      command: "paper-snapshot --manifest screens.json --json",
       description: "A batch from a manifest; one JSON line per artboard",
     },
     {
-      command: "paper-snap http://localhost:3000/settings --replace 1A-0",
+      command: "paper-snapshot http://localhost:3000/settings --replace 1A-0",
       description: "Refresh an existing artboard after the app changed",
     },
     {
-      command: "paper-snap http://localhost:3000 --local-storage theme=dark --color-scheme dark",
+      command:
+        "paper-snapshot http://localhost:3000 --local-storage theme=dark --color-scheme dark",
       description: "Dark mode for an app that stores its theme",
     },
-    { command: "paper-snap", description: "Capture the tab agent-browser is showing" },
+    { command: "paper-snapshot", description: "Capture the tab agent-browser is showing" },
     {
-      command: "paper-snap --source chrome --tab localhost:3000",
+      command: "paper-snapshot --source chrome --tab localhost:3000",
       description: "Capture a tab of your everyday Chrome (remote debugging enabled)",
     },
     {
-      command: "paper-snap --cdp http://localhost:9222",
+      command: "paper-snapshot --cdp http://localhost:9222",
       description: "Capture the active tab of any CDP browser",
     },
   ]),

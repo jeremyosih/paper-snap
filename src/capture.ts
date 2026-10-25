@@ -201,7 +201,7 @@ const pinImageHeights = (page: Page) =>
         const height = image.getBoundingClientRect().height;
 
         if (height === 0 || image.style.height !== "") continue;
-        image.dataset["paperSnapPinned"] = "";
+        image.dataset["paperSnapshotPinned"] = "";
         image.style.setProperty("height", `${height}px`);
       }
     }),
@@ -210,9 +210,9 @@ const pinImageHeights = (page: Page) =>
 const unpinImageHeights = (page: Page) =>
   step("unpin-images", () =>
     page.evaluate(() => {
-      for (const image of document.querySelectorAll<HTMLElement>("[data-paper-snap-pinned]")) {
+      for (const image of document.querySelectorAll<HTMLElement>("[data-paper-snapshot-pinned]")) {
         image.style.removeProperty("height");
-        delete image.dataset["paperSnapPinned"];
+        delete image.dataset["paperSnapshotPinned"];
       }
     }),
   ).pipe(Effect.ignore);

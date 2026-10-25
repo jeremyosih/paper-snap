@@ -34006,7 +34006,7 @@ const layer$3 = /*#__PURE__*/ layerMergedContext(/*#__PURE__*/ succeed$2(/* @__P
 /** Chromium pages from a launched local browser or an attached one (Chrome, agent-browser, Playwriter, CDP). */
 const Source = taggedEnum();
 var BrowserError = class extends TaggedError()("Browser.BrowserError", { message: String$1 }) {};
-var Service$2 = class extends Service$3()("paper-snap/browser/Service") {};
+var Service$2 = class extends Service$3()("paper-snapshot/browser/Service") {};
 const defaultViewport = {
 	width: 1440,
 	height: 900
@@ -34550,8 +34550,8 @@ const decodeAt$1 = (stage, schema) => (value) => decodeUnknownEffect(schema)(val
 })));
 /** Runs and clears every undo function the passes registered. */
 const restore = (page) => step$1("restore", () => page.evaluate(() => {
-	for (const undo of (window.__paperSnapRestore ?? []).reverse()) undo();
-	delete window.__paperSnapRestore;
+	for (const undo of (window.__paperSnapshotRestore ?? []).reverse()) undo();
+	delete window.__paperSnapshotRestore;
 })).pipe(ignore);
 const Counts = Struct({
 	resolved: Finite,
@@ -34586,7 +34586,7 @@ const inlineSprites = fn("Prepare.inlineSprites")(function* (page, context, time
 		const namespace = "http://www.w3.org/2000/svg";
 		const parser = new DOMParser();
 		const documents = new Map(entries.map(([url, text]) => [url, parser.parseFromString(text, "image/svg+xml")]));
-		const log = window.__paperSnapRestore ??= [];
+		const log = window.__paperSnapshotRestore ??= [];
 		let resolved = 0;
 		let unresolved = 0;
 		for (const use of document.querySelectorAll("use")) {
@@ -34629,7 +34629,7 @@ const inlineSprites = fn("Prepare.inlineSprites")(function* (page, context, time
 * with every cell at its rendered width, so they import exactly as rendered.
 */
 const fixColspans = (page) => step$1("colspans", () => page.evaluate(() => {
-	const log = window.__paperSnapRestore ??= [];
+	const log = window.__paperSnapshotRestore ??= [];
 	const tables = /* @__PURE__ */ new Set();
 	for (const cell of document.querySelectorAll("td, th")) {
 		const table = cell.closest("table");
@@ -34846,14 +34846,14 @@ const pinImageHeights = (page) => step("pin-images", () => page.evaluate(() => {
 	for (const image of document.querySelectorAll("img")) {
 		const height = image.getBoundingClientRect().height;
 		if (height === 0 || image.style.height !== "") continue;
-		image.dataset["paperSnapPinned"] = "";
+		image.dataset["paperSnapshotPinned"] = "";
 		image.style.setProperty("height", `${height}px`);
 	}
 }));
 const unpinImageHeights = (page) => step("unpin-images", () => page.evaluate(() => {
-	for (const image of document.querySelectorAll("[data-paper-snap-pinned]")) {
+	for (const image of document.querySelectorAll("[data-paper-snapshot-pinned]")) {
 		image.style.removeProperty("height");
-		delete image.dataset["paperSnapPinned"];
+		delete image.dataset["paperSnapshotPinned"];
 	}
 })).pipe(ignore);
 /** Parses `name=value; domain=…; path=…; secure; httponly` into a Playwright cookie. */
@@ -35469,14 +35469,14 @@ function unzipSync(data, opts) {
 *
 * The extension is downloaded from the Chrome Web Store on first use and cached; its
 * capture function is located by behaviour, not by its minified name, so new extension
-* releases keep working. No Paper code ships with paper-snap.
+* releases keep working. No Paper code ships with paper-snapshot.
 */
 /** Paper Snapshot on the Chrome Web Store. */
 const paperSnapshotId = "lidfahaahiogmnlccifabccgplofocck";
 /** Strings only the extension's DOM serializer contains. */
 const serializerMarkers = ["x-paper-style-reference", "paper-snapshot-original-tag"];
 var ExtensionError = class extends TaggedError()("Extension.ExtensionError", { message: String$1 }) {};
-var Service$1 = class extends Service$3()("paper-snap/extension/Service") {};
+var Service$1 = class extends Service$3()("paper-snapshot/extension/Service") {};
 const decodeManifest$1 = decodeUnknownEffect(fromJsonString(Struct({ version: String$1 })));
 const textDecoder = new TextDecoder();
 /** CRX3: "Cr24", format version, header length, header, then a plain zip archive. */
@@ -52240,7 +52240,7 @@ var PaperError = class extends TaggedError()("Paper.PaperError", {
 	tool: String$1,
 	message: String$1
 }) {};
-var Service = class extends Service$3()("paper-snap/paper/Service") {};
+var Service = class extends Service$3()("paper-snapshot/paper/Service") {};
 const TextBlock = Struct({
 	type: Literal("text"),
 	text: String$1
@@ -52270,8 +52270,8 @@ const NodeInfo = fromJsonString(Struct({
 }));
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
-		name: "paper-snap",
-		version: "0.3.0"
+		name: "paper-snapshot",
+		version: "0.4.0"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -52459,7 +52459,7 @@ const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(funct
 }) }));
 //#endregion
 //#region src/cli.ts
-/** `paper-snap`: every behaviour is a flag; defaults suit a one-shot capture into the open Paper file. */
+/** `paper-snapshot`: every behaviour is a flag; defaults suit a one-shot capture into the open Paper file. */
 const milliseconds = (name, fallback, description) => integer$1(name).pipe(withDescription$2(`${description} (ms)`), withDefault(fallback));
 const optionalString = (name, description) => string$2(name).pipe(withDescription$2(description), optional$1);
 const optionalInteger = (name, description) => integer$1(name).pipe(withDescription$2(description), optional$1);
@@ -52483,7 +52483,7 @@ const flags = {
 	tab: optionalString("tab", "Attached browsers: capture the tab whose URL or title contains this text (default: the visible tab)"),
 	agentBrowserBin: string$2("agent-browser-bin").pipe(withDescription$2("agent-browser executable"), withDefault("agent-browser")),
 	agentBrowserSession: optionalString("agent-browser-session", "agent-browser session name"),
-	browser: string$2("browser").pipe(withDescription$2("Chromium-based executable to launch (default: installed Chrome/Edge/Brave/Chromium)"), withFallbackConfig(string$5("PAPER_SNAP_BROWSER")), optional$1),
+	browser: string$2("browser").pipe(withDescription$2("Chromium-based executable to launch (default: installed Chrome/Edge/Brave/Chromium)"), withFallbackConfig(string$5("PAPER_SNAPSHOT_BROWSER")), optional$1),
 	browserArgs: repeatable("browser-arg", "Extra command-line argument for the launched browser"),
 	headed: toggle("headed", false, "Show the launched browser"),
 	downloadBrowser: toggle("download-browser", true, "Download headless Chromium when no installed browser is found"),
@@ -52538,7 +52538,7 @@ const flags = {
 	extension: optionalString("extension", "Paper Snapshot extension to use: .crx, .zip, unpacked directory, or .js"),
 	extensionId: string$2("extension-id").pipe(withDescription$2("Chrome Web Store id of Paper Snapshot"), withDefault(paperSnapshotId)),
 	refreshExtension: toggle("refresh-extension", false, "Re-download the extension instead of using the cached copy"),
-	cacheDir: optionalString("cache-dir", "Cache directory (default ~/.cache/paper-snap)"),
+	cacheDir: optionalString("cache-dir", "Cache directory (default ~/.cache/paper-snapshot)"),
 	push: boolean$2("push").pipe(withDescription$2("Create artboards in Paper (default unless --out or --clipboard is given)"), optional$1),
 	clipboard: toggle("clipboard", false, "Copy the snapshot for a manual ⌘V into Paper (macOS, single capture)"),
 	out: optionalString("out", "Write snapshot HTML to a file (\"-\" for stdout); with several captures, a directory").pipe(withAlias("o")),
@@ -52723,7 +52723,7 @@ const target = (job, input, name, layout) => {
 	});
 };
 const slug = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "snapshot";
-const handler = fn("paper-snap")(function* (input) {
+const handler = fn("paper-snapshot")(function* (input) {
 	const fs = yield* FileSystem;
 	const path = yield* Path$1;
 	const home = yield* string$5("HOME").pipe(withDefault$2("."));
@@ -52736,7 +52736,7 @@ const handler = fn("paper-snap")(function* (input) {
 	const push = getOrElse(input.push, () => isNone(input.out) && !input.clipboard);
 	if (batch && input.clipboard) return yield* new UsageError({ message: "--clipboard takes a single capture" });
 	if (batch && getOrUndefined$1(input.out) === "-") return yield* new UsageError({ message: "--out - takes a single capture; pass a directory for several" });
-	const cacheDir = getOrElse(input.cacheDir, () => path.join(getOrElse(xdgCache, () => path.join(home, ".cache")), "paper-snap"));
+	const cacheDir = getOrElse(input.cacheDir, () => path.join(getOrElse(xdgCache, () => path.join(home, ".cache")), "paper-snapshot"));
 	const serializer = yield* (yield* Service$1).serializer({
 		extensionId: input.extensionId,
 		localPath: input.extension,
@@ -52878,41 +52878,41 @@ const run = (input) => {
 	}).pipe(flatMap$1(log), ignore) : void_));
 	return input.quiet ? program.pipe(provideService(MinimumLogLevel, "Warn")) : program;
 };
-const command = make$5("paper-snap", flags, run).pipe(withDescription$1("Snapshot URLs, local dev servers, or an already-open browser tab into Paper as editable layers, using the Paper Snapshot extension's serializer."), withExamples([
+const command = make$5("paper-snapshot", flags, run).pipe(withDescription$1("Snapshot URLs, local dev servers, or an already-open browser tab into Paper as editable layers, using the Paper Snapshot extension's serializer."), withExamples([
 	{
-		command: "paper-snap https://linear.app",
+		command: "paper-snapshot https://linear.app",
 		description: "Whole page into the open Paper file"
 	},
 	{
-		command: "paper-snap http://localhost:3000 -s \"#pricing\" --width 390 --height 844",
+		command: "paper-snapshot http://localhost:3000 -s \"#pricing\" --width 390 --height 844",
 		description: "One element of a local dev server, mobile viewport"
 	},
 	{
-		command: "paper-snap http://localhost:3000/ /pricing /settings --layout row",
+		command: "paper-snapshot http://localhost:3000/ /pricing /settings --layout row",
 		description: "Several screens side by side"
 	},
 	{
-		command: "paper-snap --manifest screens.json --json",
+		command: "paper-snapshot --manifest screens.json --json",
 		description: "A batch from a manifest; one JSON line per artboard"
 	},
 	{
-		command: "paper-snap http://localhost:3000/settings --replace 1A-0",
+		command: "paper-snapshot http://localhost:3000/settings --replace 1A-0",
 		description: "Refresh an existing artboard after the app changed"
 	},
 	{
-		command: "paper-snap http://localhost:3000 --local-storage theme=dark --color-scheme dark",
+		command: "paper-snapshot http://localhost:3000 --local-storage theme=dark --color-scheme dark",
 		description: "Dark mode for an app that stores its theme"
 	},
 	{
-		command: "paper-snap",
+		command: "paper-snapshot",
 		description: "Capture the tab agent-browser is showing"
 	},
 	{
-		command: "paper-snap --source chrome --tab localhost:3000",
+		command: "paper-snapshot --source chrome --tab localhost:3000",
 		description: "Capture a tab of your everyday Chrome (remote debugging enabled)"
 	},
 	{
-		command: "paper-snap --cdp http://localhost:9222",
+		command: "paper-snapshot --cdp http://localhost:9222",
 		description: "Capture the active tab of any CDP browser"
 	}
 ]));
@@ -52920,7 +52920,7 @@ const command = make$5("paper-snap", flags, run).pipe(withDescription$1("Snapsho
 //#region src/bin.ts
 const LoggerLive = mergeAll(layer$4([consolePretty({ stderr: true })]), succeed$3(LogToStderr, true));
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.3.0" }).pipe(tapError((error) => error$1(`paper-snap: ${error.message}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.4.0" }).pipe(tapError((error) => error$1(`paper-snapshot: ${error.message}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);

@@ -1,30 +1,30 @@
-# paper-snap
+# paper-snapshot
 
 Snapshot any URL, local dev server, or live browser tab into [Paper](https://paper.design) as editable layers, from the command line. It does what the [Paper Snapshot](https://paper.design/snapshot-extension) extension does, but headlessly, so coding agents can do it too.
 
 ```sh
-paper-snap https://linear.app                                    # whole page → new artboard
-paper-snap http://localhost:3000 -s "#pricing" --width 390       # one element, mobile width
-paper-snap http://localhost:3000/ /pricing /settings             # several screens in a row
-paper-snap --manifest screens.json --json                        # a batch, one JSON line each
-paper-snap http://localhost:3000/settings --replace 1A-0         # refresh an existing artboard
-paper-snap http://localhost:3000 --local-storage theme=dark      # app state without scripting
-paper-snap                                                       # the tab agent-browser is on
-paper-snap --source chrome --tab localhost:3000                  # a tab in your everyday Chrome
+paper-snapshot https://linear.app                                    # whole page → new artboard
+paper-snapshot http://localhost:3000 -s "#pricing" --width 390       # one element, mobile width
+paper-snapshot http://localhost:3000/ /pricing /settings             # several screens in a row
+paper-snapshot --manifest screens.json --json                        # a batch, one JSON line each
+paper-snapshot http://localhost:3000/settings --replace 1A-0         # refresh an existing artboard
+paper-snapshot http://localhost:3000 --local-storage theme=dark      # app state without scripting
+paper-snapshot                                                       # the tab agent-browser is on
+paper-snapshot --source chrome --tab localhost:3000                  # a tab in your everyday Chrome
 ```
 
 ## Install
 
 ```sh
-npm install -g https://github.com/jeremyosih/paper-snap/tarball/main
-npx skills add jeremyosih/paper-snap --skill paper-snap -g   # the agent skill
+npm install -g https://github.com/jeremyosih/paper-snapshot/tarball/main
+npx skills add jeremyosih/paper-snapshot --skill paper-snapshot -g   # the agent skill
 ```
 
 Requirements: Node 22+, the Paper app running (for pushing), and a Chromium-based browser. Installed Chrome, Edge, Brave and Chromium are found automatically; if none is installed, a headless Chromium is downloaded once.
 
 ## How it works
 
-1. **Serializer.** On first run, paper-snap downloads the Paper Snapshot extension from the Chrome Web Store and caches it in `~/.cache/paper-snap`. It evaluates the extension's scripts in a sandbox and extracts the function that turns a DOM element into Paper's snapshot HTML (computed styles inlined, pseudo-elements, SVG, canvas and video frames, form state). The function is found by behaviour, not by name, so extension updates keep working. Nothing from Paper is bundled here.
+1. **Serializer.** On first run, paper-snapshot downloads the Paper Snapshot extension from the Chrome Web Store and caches it in `~/.cache/paper-snapshot`. It evaluates the extension's scripts in a sandbox and extracts the function that turns a DOM element into Paper's snapshot HTML (computed styles inlined, pseudo-elements, SVG, canvas and video frames, form state). The function is found by behaviour, not by name, so extension updates keep working. Nothing from Paper is bundled here.
 2. **Page.** The page is loaded, given its state (cookies, storage, clicks), and scrolled so lazy content renders. Before serializing, a few passes make it import cleanly, and are undone afterwards:
    - the viewport grows until no internal scroll container clips content (`h-screen` app shells);
    - external SVG sprites (`<use href="/sprite.svg#icon">`) are inlined with their computed colors;
@@ -70,7 +70,7 @@ Several URLs, or a `--manifest` JSON file, run as one batch: one browser, one Pa
 
 Artboards are laid out with `--layout row|column|grid` (`--columns`, `--gap`) from the first one's position. `--x/--y`, `--below <id>` or `--right-of <id>` anchor that first artboard. `--replace <id>` refreshes an existing artboard in place, keeping its id, position and name.
 
-Every behaviour is a flag: viewport, color scheme, page state, headers, timeouts, scrolling, fidelity passes, the target file, page and position in Paper. See `paper-snap --help`.
+Every behaviour is a flag: viewport, color scheme, page state, headers, timeouts, scrolling, fidelity passes, the target file, page and position in Paper. See `paper-snapshot --help`.
 
 ## Development
 
