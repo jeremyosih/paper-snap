@@ -2915,7 +2915,7 @@ const Prototype = (options) => makePrimitiveProto({
 * @category constructors
 * @since 2.0.0
 */
-const make$36 = (isEquivalent) => (self, that) => self === that || isEquivalent(self, that);
+const make$37 = (isEquivalent) => (self, that) => self === that || isEquivalent(self, that);
 const isStrictEquivalent = (x, y) => x === y;
 /**
 * Creates an equivalence relation that uses strict equality (`===`) to compare values.
@@ -3025,7 +3025,7 @@ const strictEqual = () => isStrictEquivalent;
 * @since 4.0.0
 */
 function Tuple$1(elements) {
-	return make$36((self, that) => {
+	return make$37((self, that) => {
 		if (self.length !== that.length) return false;
 		for (let i = 0; i < self.length; i++) if (!elements[i](self[i], that[i])) return false;
 		return true;
@@ -3035,7 +3035,7 @@ function Tuple$1(elements) {
 * @since 4.0.0
 */
 function Array_(item) {
-	return make$36((self, that) => {
+	return make$37((self, that) => {
 		if (self.length !== that.length) return false;
 		for (let i = 0; i < self.length; i++) if (!item(self[i], that[i])) return false;
 		return true;
@@ -3237,7 +3237,7 @@ const succeed$7 = (success) => new SuccessImpl(success);
 * @category constructors
 * @since 2.0.0
 */
-function make$35(compare) {
+function make$36(compare) {
 	return (self, that) => self === that ? 0 : compare(self, that);
 }
 /**
@@ -3268,7 +3268,7 @@ function make$35(compare) {
 * @category instances
 * @since 4.0.0
 */
-const String$10 = /*#__PURE__*/ make$35((self, that) => self < that ? -1 : 1);
+const String$10 = /*#__PURE__*/ make$36((self, that) => self < that ? -1 : 1);
 /**
 * Order instance for numbers that compares them numerically.
 *
@@ -3301,7 +3301,7 @@ const String$10 = /*#__PURE__*/ make$35((self, that) => self < that ? -1 : 1);
 * @category instances
 * @since 4.0.0
 */
-const Number$6 = /*#__PURE__*/ make$35((self, that) => {
+const Number$6 = /*#__PURE__*/ make$36((self, that) => {
 	if (globalThis.Number.isNaN(self) && globalThis.Number.isNaN(that)) return 0;
 	if (globalThis.Number.isNaN(self)) return -1;
 	if (globalThis.Number.isNaN(that)) return 1;
@@ -3340,7 +3340,7 @@ const Number$6 = /*#__PURE__*/ make$35((self, that) => {
 * @category mapping
 * @since 2.0.0
 */
-const mapInput = /*#__PURE__*/ dual(2, (self, f) => make$35((b1, b2) => self(f(b1), f(b2))));
+const mapInput = /*#__PURE__*/ dual(2, (self, f) => make$36((b1, b2) => self(f(b1), f(b2))));
 /**
 * Checks whether one value is strictly greater than another according to the given order.
 *
@@ -3972,7 +3972,7 @@ const ServiceProto = {
 		return self;
 	},
 	context(self) {
-		return make$34(this, self);
+		return make$35(this, self);
 	},
 	use(f) {
 		return withFiber$1((fiber) => f(get$2(fiber.context, this)));
@@ -4177,7 +4177,7 @@ const emptyContext = /*#__PURE__*/ makeUnsafe$5(/*#__PURE__*/ new Map());
 * @category constructors
 * @since 2.0.0
 */
-const make$34 = (key, service) => makeUnsafe$5(/* @__PURE__ */ new Map([[key.key, service]]));
+const make$35 = (key, service) => makeUnsafe$5(/* @__PURE__ */ new Map([[key.key, service]]));
 /**
 * Adds a service to a given `Context`.
 *
@@ -5393,7 +5393,7 @@ const bigintNanosPerDay = /*#__PURE__*/ BigInt(864e11);
 const bigintNanosPerWeek = /*#__PURE__*/ BigInt(6048e11);
 const roundTiesAwayFromZero = (input) => BigInt(Math.sign(input) * Math.round(Math.abs(input)));
 const roundMillisToNanos = (millis) => Number.isInteger(millis) ? BigInt(millis) * bigint1e6 : roundTiesAwayFromZero(millis * 1e6);
-const fromNanosNumber = (nanos) => make$33(Number.isFinite(nanos) ? roundTiesAwayFromZero(nanos) : nanos);
+const fromNanosNumber = (nanos) => make$34(Number.isFinite(nanos) ? roundTiesAwayFromZero(nanos) : nanos);
 const nanosToUnit = (nanos, divisor) => {
 	const value = Number(nanos);
 	if (Number.isFinite(value)) return value / divisor;
@@ -5416,9 +5416,9 @@ const divideTiesAwayFromZero = (numerator, denominator) => {
 };
 const fromMillisString = (input, scale) => {
 	const millis = Number(input) * scale;
-	if (!Number.isFinite(millis)) return make$33(millis);
+	if (!Number.isFinite(millis)) return make$34(millis);
 	const nanos = parseNanos(input, BigInt(scale) * bigint1e6);
-	return make$33(Number.isInteger(millis) && BigInt(millis) * bigint1e6 === nanos ? millis : nanos);
+	return make$34(Number.isInteger(millis) && BigInt(millis) * bigint1e6 === nanos ? millis : nanos);
 };
 const DURATION_REGEXP = /^(-?\d+(?:\.\d+)?)\s+(nanos?|micros?|millis?|seconds?|minutes?|hours?|days?|weeks?)$/;
 /**
@@ -5485,7 +5485,7 @@ const fromInputUnsafe$1 = (input) => {
 				if (input[0] === -Infinity || input[1] === -Infinity) return negativeInfinity;
 				if (input[0] === Infinity || input[1] === Infinity) return infinity;
 				const nanos = input[0] * 1e9 + input[1];
-				return Number.isFinite(nanos) && Number.isInteger(input[0]) && Number.isInteger(input[1]) ? make$33(BigInt(input[0]) * bigint1e9 + BigInt(input[1])) : fromNanosNumber(nanos);
+				return Number.isFinite(nanos) && Number.isInteger(input[0]) && Number.isInteger(input[1]) ? make$34(BigInt(input[0]) * bigint1e9 + BigInt(input[1])) : fromNanosNumber(nanos);
 			}
 			const obj = input;
 			let millis = 0;
@@ -5496,13 +5496,13 @@ const fromInputUnsafe$1 = (input) => {
 			if (obj.seconds) millis += obj.seconds * 1e3;
 			if (obj.milliseconds) millis += obj.milliseconds;
 			if (!obj.microseconds && !obj.nanoseconds) {
-				if (!Number.isFinite(millis)) return make$33(millis);
+				if (!Number.isFinite(millis)) return make$34(millis);
 				const exact = sumObjectNanos(obj);
-				return exact === void 0 || BigInt(millis) * bigint1e6 === exact ? make$33(millis) : make$33(exact);
+				return exact === void 0 || BigInt(millis) * bigint1e6 === exact ? make$34(millis) : make$34(exact);
 			}
 			const nanos = millis * 1e6 + (obj.microseconds ?? 0) * 1e3 + (obj.nanoseconds ?? 0);
 			const exact = Number.isFinite(nanos) ? sumObjectNanos(obj) : void 0;
-			return exact === void 0 ? fromNanosNumber(nanos) : make$33(exact);
+			return exact === void 0 ? fromNanosNumber(nanos) : make$34(exact);
 		}
 	}
 	return invalid$2(input);
@@ -5579,7 +5579,7 @@ const DurationProto = {
 		return pipeArguments(this, arguments);
 	}
 };
-const make$33 = (input) => {
+const make$34 = (input) => {
 	const duration = Object.create(DurationProto);
 	if (typeof input === "number") {
 		if (isNaN(input) || input === 0 || Object.is(input, -0)) duration.value = zeroDurationValue;
@@ -5702,8 +5702,8 @@ const abs = (self) => {
 	switch (self.value._tag) {
 		case "Infinity":
 		case "NegativeInfinity": return infinity;
-		case "Millis": return self.value.millis < 0 ? make$33(-self.value.millis) : self;
-		case "Nanos": return self.value.nanos < bigint0$3 ? make$33(-self.value.nanos) : self;
+		case "Millis": return self.value.millis < 0 ? make$34(-self.value.millis) : self;
+		case "Nanos": return self.value.nanos < bigint0$3 ? make$34(-self.value.nanos) : self;
 	}
 };
 /**
@@ -5721,7 +5721,7 @@ const abs = (self) => {
 * @category constructors
 * @since 2.0.0
 */
-const zero$1 = /*#__PURE__*/ make$33(0);
+const zero$1 = /*#__PURE__*/ make$34(0);
 /**
 * A Duration representing infinite time.
 *
@@ -5737,7 +5737,7 @@ const zero$1 = /*#__PURE__*/ make$33(0);
 * @category constructors
 * @since 2.0.0
 */
-const infinity = /*#__PURE__*/ make$33(Infinity);
+const infinity = /*#__PURE__*/ make$34(Infinity);
 /**
 * A Duration representing negative infinite time.
 *
@@ -5753,7 +5753,7 @@ const infinity = /*#__PURE__*/ make$33(Infinity);
 * @category constructors
 * @since 4.0.0
 */
-const negativeInfinity = /*#__PURE__*/ make$33(-Infinity);
+const negativeInfinity = /*#__PURE__*/ make$34(-Infinity);
 /**
 * Creates a Duration from nanoseconds.
 *
@@ -5769,7 +5769,7 @@ const negativeInfinity = /*#__PURE__*/ make$33(-Infinity);
 * @category constructors
 * @since 2.0.0
 */
-const nanos = (nanos) => make$33(nanos);
+const nanos = (nanos) => make$34(nanos);
 /**
 * Creates a Duration from milliseconds.
 *
@@ -5785,7 +5785,7 @@ const nanos = (nanos) => make$33(nanos);
 * @category constructors
 * @since 2.0.0
 */
-const millis = (millis) => make$33(millis);
+const millis = (millis) => make$34(millis);
 /**
 * Creates a Duration from seconds.
 *
@@ -5801,7 +5801,7 @@ const millis = (millis) => make$33(millis);
 * @category constructors
 * @since 2.0.0
 */
-const seconds = (seconds) => make$33(seconds * 1e3);
+const seconds = (seconds) => make$34(seconds * 1e3);
 /**
 * Creates a Duration from minutes.
 *
@@ -5817,7 +5817,7 @@ const seconds = (seconds) => make$33(seconds * 1e3);
 * @category constructors
 * @since 2.0.0
 */
-const minutes = (minutes) => make$33(minutes * 6e4);
+const minutes = (minutes) => make$34(minutes * 6e4);
 /**
 * Converts a Duration to milliseconds.
 *
@@ -5962,7 +5962,7 @@ const matchPair = /*#__PURE__*/ dual(3, (self, that, options) => {
 * @category instances
 * @since 2.0.0
 */
-const Order$1 = /*#__PURE__*/ make$35((self, that) => matchPair(self, that, {
+const Order$1 = /*#__PURE__*/ make$36((self, that) => matchPair(self, that, {
 	onMillis: (self, that) => self < that ? -1 : self > that ? 1 : 0,
 	onNanos: (self, that) => self < that ? -1 : self > that ? 1 : 0,
 	onInfinity: (self, that) => {
@@ -6664,7 +6664,7 @@ var ParentSpan = class extends (/*#__PURE__*/ Service$3()(ParentSpanKey, { fiber
 * @category constructors
 * @since 2.0.0
 */
-const make$32 = (options) => options;
+const make$33 = (options) => options;
 /**
 * Context reference for disabling trace propagation.
 *
@@ -6769,7 +6769,7 @@ const TracerKey = "effect/Tracer";
 * @category references
 * @since 4.0.0
 */
-const nativeTracer = /*#__PURE__*/ make$32({ span: (options) => new NativeSpan(options) });
+const nativeTracer = /*#__PURE__*/ make$33({ span: (options) => new NativeSpan(options) });
 /**
 * Default in-memory `Span` implementation used by the native tracer. It
 * generates span and trace identifiers, stores attributes, events, and links,
@@ -7195,7 +7195,7 @@ var FiberImpl = class {
 	interruptUnsafe(fiberId, annotations) {
 		if (this._exit) return;
 		let cause = causeInterrupt(fiberId);
-		if (this.cache.stackFrame) cause = causeAnnotate(cause, make$34(StackTraceKey, this.cache.stackFrame));
+		if (this.cache.stackFrame) cause = causeAnnotate(cause, make$35(StackTraceKey, this.cache.stackFrame));
 		if (annotations) cause = causeAnnotate(cause, annotations);
 		this._interruptedCause = this._interruptedCause ? causeAddInterrupts(this._interruptedCause, cause) : cause;
 		if (this.interruptible) {
@@ -8899,7 +8899,7 @@ const isLogLevelGreaterThan = /*#__PURE__*/ isGreaterThan$1(/* @__PURE__ */ mapI
 /** @internal */
 const CurrentLoggers$1 = /*#__PURE__*/ Reference("effect/Logger/CurrentLoggers", { defaultValue: () => /* @__PURE__ */ new Set([defaultLogger, tracerLogger]) });
 /** @internal */
-const LogToStderr$1 = /*#__PURE__*/ Reference("effect/Logger/LogToStderr", { defaultValue: constFalse });
+const LogToStderr = /*#__PURE__*/ Reference("effect/Logger/LogToStderr", { defaultValue: constFalse });
 const LoggerProto = {
 	["~effect/Logger"]: {
 		_Message: identity,
@@ -8929,14 +8929,6 @@ const formatLabel = (key) => key.replace(/[\s="]/g, "_");
 */
 const formatLogSpan = (self, now) => {
 	return `${formatLabel(self[0])}=${now - self[1]}ms`;
-};
-/** @internal */
-const structuredMessage = (u) => {
-	switch (typeof u) {
-		case "function":
-		case "symbol": return String(u);
-		default: return toJson(u);
-	}
 };
 /** @internal */
 const logWithLevel = (level) => (...message) => {
@@ -8969,12 +8961,6 @@ const logWithLevel = (level) => (...message) => {
 		return void_$2;
 	});
 };
-const withColor = (text, ...colors) => {
-	let out = "";
-	for (let i = 0; i < colors.length; i++) out += `\x1b[${colors[i]}m`;
-	return out + text + "\x1B[0m";
-};
-const withColorNoop = (text, ..._colors) => text;
 const colors = {
 	bold: "1",
 	red: "31",
@@ -8987,106 +8973,8 @@ const colors = {
 	black: "30",
 	bgBrightRed: "101"
 };
-const logLevelColors = {
-	None: [],
-	All: [],
-	Trace: [colors.gray],
-	Debug: [colors.blue],
-	Info: [colors.green],
-	Warn: [colors.yellow],
-	Error: [colors.red],
-	Fatal: [colors.bgBrightRed, colors.black]
-};
-const logLevelStyle = {
-	None: "",
-	All: "",
-	Trace: "color:gray",
-	Debug: "color:blue",
-	Info: "color:green",
-	Warn: "color:orange",
-	Error: "color:red",
-	Fatal: "background-color:red;color:white"
-};
+colors.gray, colors.blue, colors.green, colors.yellow, colors.red, colors.bgBrightRed, colors.black;
 const defaultDateFormat = (date) => `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")}.${date.getMilliseconds().toString().padStart(3, "0")}`;
-/** @internal */
-const consolePretty$1 = (options) => {
-	const process = globalThis.process;
-	const hasProcessStdout = typeof process?.stdout === "object" && process.stdout !== null;
-	const isDeno = "Deno" in globalThis;
-	const mode = options?.mode ?? "auto";
-	return (mode === "auto" ? hasProcessStdout || isDeno : mode === "tty") ? prettyLoggerTty(options) : prettyLoggerBrowser(options);
-};
-/** @internal */
-const prettyLoggerTty = (options) => {
-	const formatDate = options?.formatDate ?? defaultDateFormat;
-	const process = globalThis.process;
-	const processStdoutIsTTY = typeof process?.stdout === "object" && process.stdout !== null && process.stdout.isTTY === true;
-	const color = (typeof options?.colors === "boolean" ? options.colors : processStdoutIsTTY) ? withColor : withColorNoop;
-	const processIsBun = process?.isBun === true;
-	return loggerMake(({ cause, date, fiber, logLevel, message: message_ }) => {
-		const console = fiber.getRef(ConsoleRef);
-		const log = fiber.getRef(LogToStderr$1) ? console.error : console.log;
-		const message = Array.isArray(message_) ? message_.slice() : [message_];
-		let firstLine = color(`[${formatDate(date)}]`, colors.white) + ` ${color(logLevel.toUpperCase(), ...logLevelColors[logLevel])} (#${fiber.id})`;
-		const now = date.getTime();
-		const spans = fiber.getRef(CurrentLogSpans);
-		for (const span of spans) firstLine += " " + formatLogSpan(span, now);
-		firstLine += ":";
-		let messageIndex = 0;
-		if (message.length > 0) {
-			const firstMaybeString = structuredMessage(message[0]);
-			if (typeof firstMaybeString === "string") {
-				firstLine += " " + color(firstMaybeString, colors.bold, colors.cyan);
-				messageIndex++;
-			}
-		}
-		log(firstLine);
-		if (!processIsBun) console.group();
-		if (cause.reasons.length > 0) log(causePretty(cause));
-		if (messageIndex < message.length) for (; messageIndex < message.length; messageIndex++) log(redact$2(message[messageIndex]));
-		const annotations = fiber.getRef(CurrentLogAnnotations);
-		for (const [key, value] of Object.entries(annotations)) log(color(`${key}:`, colors.bold, colors.white), redact$2(value));
-		if (!processIsBun) console.groupEnd();
-	});
-};
-/** @internal */
-const prettyLoggerBrowser = (options) => {
-	const showColors = options?.colors !== false;
-	const color = showColors ? "%c" : "";
-	const formatDate = options?.formatDate ?? defaultDateFormat;
-	return loggerMake(({ cause, date, fiber, logLevel, message: message_ }) => {
-		const console = fiber.getRef(ConsoleRef);
-		const message = Array.isArray(message_) ? message_.slice() : [message_];
-		let firstLine = `${color}[${formatDate(date)}]`;
-		const firstParams = [];
-		if (showColors) firstParams.push("color:gray");
-		firstLine += ` ${color}${logLevel.toUpperCase()}${color} (#${fiber.id})`;
-		if (showColors) firstParams.push(logLevelStyle[logLevel], "");
-		const now = date.getTime();
-		const spans = fiber.getRef(CurrentLogSpans);
-		for (const span of spans) firstLine += " " + formatLogSpan(span, now);
-		firstLine += ":";
-		let messageIndex = 0;
-		if (message.length > 0) {
-			const firstMaybeString = structuredMessage(message[0]);
-			if (typeof firstMaybeString === "string") {
-				firstLine += ` ${color}${firstMaybeString}`;
-				if (showColors) firstParams.push("color:deepskyblue");
-				messageIndex++;
-			}
-		}
-		console.groupCollapsed(firstLine, ...firstParams);
-		if (cause.reasons.length > 0) console.error(causePretty(cause));
-		if (messageIndex < message.length) for (; messageIndex < message.length; messageIndex++) console.log(redact$2(message[messageIndex]));
-		const annotations = fiber.getRef(CurrentLogAnnotations);
-		for (const [key, value] of Object.entries(annotations)) {
-			const redacted = redact$2(value);
-			if (showColors) console.log(`%c${key}:`, "color:gray", redacted);
-			else console.log(`${key}:`, redacted);
-		}
-		console.groupEnd();
-	});
-};
 /** @internal */
 const defaultLogger = /*#__PURE__*/ loggerMake(({ cause, date, fiber, logLevel, message }) => {
 	const message_ = Array.isArray(message) ? message.slice() : [message];
@@ -9098,7 +8986,7 @@ const defaultLogger = /*#__PURE__*/ loggerMake(({ cause, date, fiber, logLevel, 
 	const annotations = fiber.getRef(CurrentLogAnnotations);
 	if (Object.keys(annotations).length > 0) message_.push(annotations);
 	const console = fiber.getRef(ConsoleRef);
-	(fiber.getRef(LogToStderr$1) ? console.error : console.log)(`[${defaultDateFormat(date)}] ${logLevel.toUpperCase()} (#${fiber.id})${spanString}:`, ...message_);
+	(fiber.getRef(LogToStderr) ? console.error : console.log)(`[${defaultDateFormat(date)}] ${logLevel.toUpperCase()} (#${fiber.id})${spanString}:`, ...message_);
 });
 /** @internal */
 const tracerLogger = /*#__PURE__*/ loggerMake(({ cause, fiber, logLevel, message }) => {
@@ -9948,7 +9836,7 @@ const Scope = scopeTag;
 * @category constructors
 * @since 2.0.0
 */
-const make$31 = scopeMake;
+const make$32 = scopeMake;
 /**
 * Creates a new `Scope` synchronously without wrapping it in an `Effect`.
 * This is useful when you need a scope immediately but should be used with caution
@@ -10536,8 +10424,8 @@ const buildWithScope = /*#__PURE__*/ dual(2, (self, scope) => withFiber$1((fiber
 * @since 2.0.0
 */
 const succeed$3 = function() {
-	if (arguments.length === 1) return (resource) => succeedContext(make$34(arguments[0], resource));
-	return succeedContext(make$34(arguments[0], arguments[1]));
+	if (arguments.length === 1) return (resource) => succeedContext(make$35(arguments[0], resource));
+	return succeedContext(make$35(arguments[0], arguments[1]));
 };
 /**
 * Constructs a layer that provides all services in an already available
@@ -10631,7 +10519,7 @@ const effect = function() {
 	if (arguments.length === 1) return (effect) => effectImpl(arguments[0], effect);
 	return effectImpl(arguments[0], arguments[1]);
 };
-const effectImpl = (service, effect) => effectContext(map$5(effect, (value) => make$34(service, value)));
+const effectImpl = (service, effect) => effectContext(map$5(effect, (value) => make$35(service, value)));
 /**
 * Constructs a layer from an effect that produces all services in a `Context`.
 *
@@ -15622,13 +15510,13 @@ const binaryUnits = [
 ];
 const allUnits = [...decimalUnits, .../*#__PURE__*/ binaryUnits.slice(1)];
 const unitsByName = /*#__PURE__*/ new Map(/*#__PURE__*/ allUnits.flatMap((unit) => unit.names.map((name) => [name, unit])));
-const make$29 = (value) => value;
+const make$30 = (value) => value;
 const invalid$1 = (message) => {
 	throw new Error(`Invalid ByteSize: ${message}`);
 };
 const fromNumber = (input) => {
 	if (!Number.isSafeInteger(input) || input < 0) return invalid$1(`expected a non-negative safe integer, received ${input}`);
-	return make$29(BigInt(input));
+	return make$30(BigInt(input));
 };
 /**
 * Parses a byte-size string and throws for invalid syntax, unsupported units,
@@ -15654,7 +15542,7 @@ const fromStringUnsafe = (input) => {
 	const scale = BigInt(10) ** BigInt(fraction.length);
 	const numerator = BigInt(match[1] + fraction) * unit.factor;
 	if (numerator % scale !== bigint0$1) return invalid$1(`${JSON.stringify(input)} does not represent an integral number of bytes`);
-	return make$29(numerator / scale);
+	return make$30(numerator / scale);
 };
 /**
 * Decodes a trusted input into a byte size and throws for invalid input.
@@ -15667,7 +15555,7 @@ const fromInputUnsafe = (input) => {
 	switch (typeof input) {
 		case "bigint":
 			if (input < bigint0$1) return invalid$1(`expected a non-negative bigint, received ${input}`);
-			return make$29(input);
+			return make$30(input);
 		case "number": return fromNumber(input);
 		case "string": return fromStringUnsafe(input);
 	}
@@ -16058,7 +15946,7 @@ const MutableRefProto = {
 * @category constructors
 * @since 2.0.0
 */
-const make$28 = (value) => {
+const make$29 = (value) => {
 	const ref = Object.create(MutableRefProto);
 	ref.current = value;
 	return ref;
@@ -16109,7 +15997,7 @@ const Empty$1 = /*#__PURE__*/ Symbol.for("effect/MutableList/Empty");
 * @category constructors
 * @since 2.0.0
 */
-const make$27 = () => ({
+const make$28 = () => ({
 	head: void 0,
 	tail: void 0,
 	length: 0
@@ -16343,12 +16231,12 @@ const QueueProto = {
 * @category constructors
 * @since 4.0.0
 */
-const make$26 = (options) => withFiber$1((fiber) => {
+const make$27 = (options) => withFiber$1((fiber) => {
 	const self = Object.create(QueueProto);
 	self.dispatcher = fiber.currentDispatcher;
 	self.capacity = options?.capacity ?? Number.POSITIVE_INFINITY;
 	self.strategy = options?.strategy ?? "suspend";
-	self.messages = make$27();
+	self.messages = make$28();
 	self.scheduleRunning = false;
 	self.state = {
 		_tag: "Open",
@@ -16389,7 +16277,7 @@ const make$26 = (options) => withFiber$1((fiber) => {
 * @category constructors
 * @since 2.0.0
 */
-const bounded = (capacity) => make$26({ capacity });
+const bounded = (capacity) => make$27({ capacity });
 /**
 * Adds a message to the queue. Returns `false` if the queue is done.
 *
@@ -17244,7 +17132,7 @@ const fromTransformBracket = (f) => fromTransform$1(fnUntraced(function* (upstre
 * @since 4.0.0
 */
 const toTransform = (channel) => channel.transform;
-const asyncQueue = (scope, f, options) => make$26({
+const asyncQueue = (scope, f, options) => make$27({
 	capacity: options?.bufferSize,
 	strategy: options?.strategy
 }).pipe(tap((queue) => addFinalizer$1(scope, shutdown(queue))), tap((queue) => provide$3(f(queue), scope).pipe(catchCause((cause) => failCause(queue, cause)), forkIn(scope, { startImmediately: true }))));
@@ -17369,7 +17257,7 @@ const fromReadableStream$1 = (options) => fromTransform$1((_, scope) => readable
 }));
 const readableStreamToPullUnsafe = (options) => {
 	const reader = options.readable.getReader();
-	const exit = options.exit ?? make$28(void 0);
+	const exit = options.exit ?? make$29(void 0);
 	const pull = suspend$2(() => {
 		if (exit.current) return exit.current;
 		return matchCauseEffect(tryPromise({
@@ -18055,7 +17943,7 @@ var RcRefImpl = class {
 	}
 };
 /** @internal */
-const make$25 = (options) => withFiber((fiber) => {
+const make$26 = (options) => withFiber((fiber) => {
 	const context = fiber.context;
 	const scope = get$2(context, Scope);
 	const ref = new RcRefImpl(options.acquire, context, scope, options.idleTimeToLive !== void 0 ? fromInputUnsafe$1(options.idleTimeToLive) : void 0);
@@ -18192,7 +18080,7 @@ const release = (self, state) => {
 * @category constructors
 * @since 3.5.0
 */
-const make$24 = make$25;
+const make$25 = make$26;
 /**
 * Gets the value from an `RcRef`, acquiring it first if needed.
 *
@@ -18970,7 +18858,7 @@ const FileSystem = /*#__PURE__*/ Service$3("effect/FileSystem");
 * @category constructors
 * @since 4.0.0
 */
-const make$23 = (impl) => FileSystem.of({
+const make$24 = (impl) => FileSystem.of({
 	...impl,
 	[TypeId$29]: TypeId$29,
 	exists: (path) => pipe$1(impl.access(path), as(true), catchTag("PlatformError", (e) => e.reason._tag === "NotFound" ? succeed$2(false) : fail$3(e))),
@@ -19192,7 +19080,7 @@ const Path$1 = /*#__PURE__*/ Service$3("effect/Path");
 * @category constructors
 * @since 4.0.0
 */
-const make$22 = (impl) => Path$1.of({
+const make$23 = (impl) => Path$1.of({
 	...impl,
 	[TypeId$28]: TypeId$28,
 	resolveWithin(root, input) {
@@ -20046,7 +19934,7 @@ const isBigDecimal = (u) => hasProperty(u, TypeId$26);
 * @category constructors
 * @since 2.0.0
 */
-const make$20 = (value, scale) => {
+const make$21 = (value, scale) => {
 	if (!Number.isSafeInteger(scale)) throw new RangeError(`Scale must be a safe integer, got ${scale}`);
 	const o = Object.create(BigDecimalProto);
 	o.value = value;
@@ -20054,7 +19942,7 @@ const make$20 = (value, scale) => {
 	return o;
 };
 const makeNormalized = (value, scale) => {
-	const o = make$20(value, scale);
+	const o = make$21(value, scale);
 	o.normalized = o;
 	return o;
 };
@@ -22536,7 +22424,7 @@ const makeHandle = (params) => Object.setPrototypeOf({ ...params }, HandleProto)
 * @category constructors
 * @since 4.0.0
 */
-const make$19 = (spawn) => {
+const make$20 = (spawn) => {
 	const streamString = (command, options) => spawn(command).pipe(map$3((handle) => decodeText(options?.includeStderr === true ? handle.all : handle.stdout)), unwrap$1);
 	const streamLines = (command, options) => splitLines(streamString(command, options));
 	return ChildProcessSpawner.of({
@@ -22620,7 +22508,7 @@ const makeStandardCommand = (command, args, options) => Object.assign(Object.cre
 * @category constructors
 * @since 4.0.0
 */
-const make$18 = function make(...args) {
+const make$19 = function make(...args) {
 	if (isTemplateString(args[0])) {
 		const [templates, ...expressions] = args;
 		const tokens = parseTemplates(templates, expressions);
@@ -23010,7 +22898,7 @@ const fromReadableChannel = (options) => fromTransform$1((_, scope) => readableT
 const readableToPullUnsafe = (options) => {
 	const readable = options.readable;
 	const closeOnDone = options.closeOnDone ?? true;
-	const exit = options.exit ?? make$28(void 0);
+	const exit = options.exit ?? make$29(void 0);
 	const latch = options.latch ?? makeUnsafe$1(false);
 	function onReadable() {
 		latch.openUnsafe();
@@ -23424,7 +23312,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 					const stdinConfig = resolveStdinOption(command.options);
 					const sourceStream = unwrap$1(succeed$2(getSourceStream(handles[handles.length - 1], options.from)));
 					const toOption = options.to ?? "stdin";
-					if (toOption === "stdin") handles.push(yield* spawnCommand(make$18(command.command, command.args, {
+					if (toOption === "stdin") handles.push(yield* spawnCommand(make$19(command.command, command.args, {
 						...command.options,
 						stdin: {
 							...stdinConfig,
@@ -23436,7 +23324,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 						if (isNotUndefined(fd)) {
 							const fdName$1 = fdName(fd);
 							const existingFds = command.options.additionalFds ?? {};
-							handles.push(yield* spawnCommand(make$18(command.command, command.args, {
+							handles.push(yield* spawnCommand(make$19(command.command, command.args, {
 								...command.options,
 								additionalFds: {
 									...existingFds,
@@ -23446,7 +23334,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 									}
 								}
 							})));
-						} else handles.push(yield* spawnCommand(make$18(command.command, command.args, {
+						} else handles.push(yield* spawnCommand(make$19(command.command, command.args, {
 							...command.options,
 							stdin: {
 								...stdinConfig,
@@ -23478,7 +23366,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 			}
 		}
 	});
-	return make$19(spawnCommand);
+	return make$20(spawnCommand);
 }));
 /**
 * Flattens a `Command` into an array of `StandardCommand`s along with pipe
@@ -23641,7 +23529,7 @@ const Crypto = /*#__PURE__*/ Service$3("effect/Crypto");
 * @category constructors
 * @since 4.0.0
 */
-const make$16 = (impl) => {
+const make$17 = (impl) => {
 	const randomBytesUnsafe = impl.randomBytes;
 	const randomBytes = (size) => map$3(validateSize("randomBytes", size), randomBytesUnsafe);
 	const readUint53 = (bytes) => (bytes[0] & 31) * 2 ** 48 + bytes[1] * 2 ** 40 + bytes[2] * 2 ** 32 + bytes[3] * 2 ** 24 + bytes[4] * 2 ** 16 + bytes[5] * 256 + bytes[6];
@@ -23752,7 +23640,7 @@ const digest = (algorithm, data) => try_({
 * @category layers
 * @since 1.0.0
 */
-const layer$14 = /* @__PURE__ */ succeed$3(Crypto, /* @__PURE__ */ make$16({
+const layer$14 = /* @__PURE__ */ succeed$3(Crypto, /* @__PURE__ */ make$17({
 	randomBytes: NodeCrypto.randomBytes,
 	digest
 }));
@@ -24142,7 +24030,7 @@ const writeFile = (path, data, options) => callback$1((resume, signal) => {
 		resume(fail$3(handleBadArgument("writeFile")(err)));
 	}
 });
-const makeFileSystem = /*#__PURE__*/ map$3(/*#__PURE__*/ serviceOption(WatchBackend), (backend) => make$23({
+const makeFileSystem = /*#__PURE__*/ map$3(/*#__PURE__*/ serviceOption(WatchBackend), (backend) => make$24({
 	access,
 	chmod,
 	chown,
@@ -24253,7 +24141,7 @@ const fileUrlOps = (windows) => ({
 * @category layers
 * @since 4.0.0
 */
-const layer$10 = /* @__PURE__ */ succeed$3(Path$1)(/*#__PURE__*/ make$22({
+const layer$10 = /* @__PURE__ */ succeed$3(Path$1)(/*#__PURE__*/ make$23({
 	...Path,
 	.../*#__PURE__*/ fileUrlOps(void 0)
 }));
@@ -24323,7 +24211,7 @@ const Stdio = /*#__PURE__*/ Service$3(TypeId$21);
 * @category constructors
 * @since 4.0.0
 */
-const make$14 = (options) => ({
+const make$15 = (options) => ({
 	[TypeId$21]: TypeId$21,
 	stdinIsTerminal: succeed$2(false),
 	stdoutIsTerminal: succeed$2(false),
@@ -24351,7 +24239,7 @@ const make$14 = (options) => ({
 * @category layers
 * @since 4.0.0
 */
-const layer$8 = /* @__PURE__ */ succeed$3(Stdio, /*#__PURE__*/ make$14({
+const layer$8 = /* @__PURE__ */ succeed$3(Stdio, /*#__PURE__*/ make$15({
 	args: /*#__PURE__*/ sync(() => process.argv.slice(2)),
 	stdinIsTerminal: /*#__PURE__*/ sync(() => process.stdin.isTTY === true),
 	stdoutIsTerminal: /*#__PURE__*/ sync(() => process.stdout.isTTY === true),
@@ -24641,7 +24529,7 @@ const isRedacted = (u) => hasProperty(u, TypeId$19);
 * @category constructors
 * @since 3.3.0
 */
-const make$13 = (value, options) => {
+const make$14 = (value, options) => {
 	const self = Object.create(Proto$10);
 	if (options?.label) self.label = options.label;
 	redactedRegistry.set(self, value);
@@ -24730,7 +24618,7 @@ const Proto$9 = /*#__PURE__*/ Object.defineProperties(/*#__PURE__*/ Object.creat
 	toString: { value: BaseProto.toString },
 	[NodeInspectSymbol]: { value: BaseProto[NodeInspectSymbol] }
 });
-const make$12 = (input) => Object.assign(Object.create(Proto$9), input);
+const make$13 = (input) => Object.assign(Object.create(Proto$9), input);
 /**
 * Provides an `Equivalence` instance that compares `Headers` by header names
 * and string values.
@@ -24795,7 +24683,7 @@ const fromRecordUnsafe = (input) => Object.setPrototypeOf(input, Proto$9);
 * @since 4.0.0
 */
 const set = /*#__PURE__*/ dual(3, (self, key, value) => {
-	const out = make$12(self);
+	const out = make$13(self);
 	out[key.toLowerCase()] = value;
 	return out;
 });
@@ -24810,7 +24698,7 @@ const set = /*#__PURE__*/ dual(3, (self, key, value) => {
 * @category combinators
 * @since 4.0.0
 */
-const setAll$1 = /*#__PURE__*/ dual(2, (self, headers) => make$12({
+const setAll$1 = /*#__PURE__*/ dual(2, (self, headers) => make$13({
 	...self,
 	...fromInput$1(headers)
 }));
@@ -24826,7 +24714,7 @@ const setAll$1 = /*#__PURE__*/ dual(2, (self, headers) => make$12({
 * @since 4.0.0
 */
 const merge$1 = /*#__PURE__*/ dual(2, (self, headers) => {
-	const out = make$12(self);
+	const out = make$13(self);
 	Object.assign(out, headers);
 	return out;
 });
@@ -24842,7 +24730,7 @@ const merge$1 = /*#__PURE__*/ dual(2, (self, headers) => {
 * @since 4.0.0
 */
 const remove = /*#__PURE__*/ dual(2, (self, key) => {
-	const out = make$12(self);
+	const out = make$13(self);
 	delete out[key.toLowerCase()];
 	return out;
 });
@@ -24862,8 +24750,8 @@ const redact$1 = /*#__PURE__*/ dual(2, (self, key) => {
 	const modify = (key) => {
 		if (typeof key === "string") {
 			const k = key.toLowerCase();
-			if (k in self) out[k] = make$13(self[k]);
-		} else for (const name in self) if (name.search(key) !== -1) out[name] = make$13(self[name]);
+			if (k in self) out[k] = make$14(self[k]);
+		} else for (const name in self) if (name.search(key) !== -1) out[name] = make$14(self[name]);
 	};
 	if (Array.isArray(key)) for (let i = 0; i < key.length; i++) modify(key[i]);
 	else modify(key);
@@ -24970,7 +24858,7 @@ const Proto$8 = {
 * @category constructors
 * @since 4.0.0
 */
-const make$11 = (params) => {
+const make$12 = (params) => {
 	const self = Object.create(Proto$8);
 	self.params = params;
 	return self;
@@ -24996,7 +24884,7 @@ const fromInput = (input) => {
 		const [keys, value] = parsed[i];
 		out.push([`${keys[0]}[${keys.slice(1).join("][")}]`, value]);
 	} else out.push(parsed[i]);
-	return make$11(out);
+	return make$12(out);
 };
 const fromInputNested = (input) => {
 	const entries = typeof input[Symbol.iterator] === "function" ? fromIterable$1(input) : Object.entries(input);
@@ -25022,7 +24910,7 @@ const coerce = (value) => isRedacted(value) ? value : String(value);
 * @category instances
 * @since 4.0.0
 */
-const Equivalence$1 = /*#__PURE__*/ make$36((a, b) => arrayEquivalence(a.params, b.params));
+const Equivalence$1 = /*#__PURE__*/ make$37((a, b) => arrayEquivalence(a.params, b.params));
 const arrayEquivalence = /*#__PURE__*/ makeEquivalence(/*#__PURE__*/ makeEquivalence$2([/*#__PURE__*/ strictEqual(), /*#__PURE__*/ asEquivalence()]));
 /**
 * An empty `UrlParams` value.
@@ -25031,7 +24919,7 @@ const arrayEquivalence = /*#__PURE__*/ makeEquivalence(/*#__PURE__*/ makeEquival
 * @category constructors
 * @since 4.0.0
 */
-const empty$2 = /*#__PURE__*/ make$11([]);
+const empty$2 = /*#__PURE__*/ make$12([]);
 /**
 * Sets multiple query parameters from input.
 *
@@ -25052,7 +24940,7 @@ const setAll = /*#__PURE__*/ dual(2, (self, input) => {
 		if (keys.has(self.params[i][0])) continue;
 		params.push(self.params[i]);
 	}
-	return make$11(params);
+	return make$12(params);
 });
 /**
 * Returns the parameter pairs with selected values wrapped in `Redacted`.
@@ -25068,7 +24956,7 @@ const setAll = /*#__PURE__*/ dual(2, (self, input) => {
 */
 const redact = /*#__PURE__*/ dual(2, (self, key) => {
 	const patterns = Array.isArray(key) ? key : [key];
-	return self.params.map(([name, value]) => [name, typeof value === "string" && isRedactedName(name, patterns) ? make$13(value) : value]);
+	return self.params.map(([name, value]) => [name, typeof value === "string" && isRedactedName(name, patterns) ? make$14(value) : value]);
 });
 /**
 * Checks whether a parameter name matches one of the redaction patterns.
@@ -25445,7 +25333,7 @@ function makeOption(schema) {
 * @category constructors
 * @since 4.0.0
 */
-function make$10(schema) {
+function make$11(schema) {
 	return makeConstructorSync(toType(schema.ast));
 }
 /**
@@ -25633,7 +25521,7 @@ const RebuildOptions = /*#__PURE__*/ Symbol();
 const SchemaProto = {
 	[TypeId$16]: TypeId$16,
 	get make() {
-		const value = make$10(this);
+		const value = make$11(this);
 		Object.defineProperty(this, "make", {
 			value,
 			enumerable: true
@@ -25669,11 +25557,11 @@ const SchemaProto = {
 		return this.rebuild(appendChecks(this.ast, checks));
 	},
 	rebuild(ast) {
-		return make$9(ast, this[RebuildOptions]);
+		return make$10(ast, this[RebuildOptions]);
 	}
 };
 /** @internal */
-function make$9(ast, options) {
+function make$10(ast, options) {
 	function Schema() {}
 	const self = Object.setPrototypeOf(Schema, SchemaProto);
 	if (options && (Object.hasOwn(options, "name") || Object.hasOwn(options, "length") || Object.hasOwn(options, "__proto__"))) Object.defineProperties(self, Object.getOwnPropertyDescriptors({ ...options }));
@@ -25699,7 +25587,7 @@ function makeReorder(getPriority) {
 }
 /** @internal */
 function toCodecStringTree$1(schema) {
-	return make$9(toCodecStringTreeAST(schema.ast), { schema });
+	return make$10(toCodecStringTreeAST(schema.ast), { schema });
 }
 const toStringTreeReorder = /*#__PURE__*/ makeReorder((ast) => {
 	switch (ast._tag) {
@@ -25715,7 +25603,7 @@ const toStringTreeReorder = /*#__PURE__*/ makeReorder((ast) => {
 function toCodecStringTreeASTStep(ast, recur, onMissingAnnotation) {
 	switch (ast._tag) {
 		case "Declaration": {
-			const typeParameters = ast.typeParameters.map((tp) => make$9(recur(toEncoded(tp))));
+			const typeParameters = ast.typeParameters.map((tp) => make$10(recur(toEncoded(tp))));
 			const getStringTreeLink = ast.annotations?.toCodecStringTree;
 			if (isFunction(getStringTreeLink)) {
 				const link = getStringTreeLink(typeParameters);
@@ -26077,7 +25965,7 @@ const encodeEffect = encodeUnknownEffect;
 * @category constructors
 * @since 3.10.0
 */
-const make$8 = make$9;
+const make$9 = make$10;
 /**
 * Checks whether a value is a `Schema`.
 *
@@ -26111,7 +25999,7 @@ function isSchema(u) {
 * @category combinators
 * @since 4.0.0
 */
-const optionalKey = /*#__PURE__*/ lambda((schema) => make$8(optionalKey$1(schema.ast), { schema }));
+const optionalKey = /*#__PURE__*/ lambda((schema) => make$9(optionalKey$1(schema.ast), { schema }));
 /**
 * Marks a struct field as optional, allowing the key to be absent or
 * `undefined`.
@@ -26144,7 +26032,7 @@ const optionalKey = /*#__PURE__*/ lambda((schema) => make$8(optionalKey$1(schema
 */
 const optional$3 = /*#__PURE__*/ lambda((self) => {
 	const schema = UndefinedOr(self);
-	return make$8(optional$4(self.ast), { schema });
+	return make$9(optional$4(self.ast), { schema });
 });
 /**
 * Creates a schema for a single literal value (string, number, bigint, boolean, or null).
@@ -26167,7 +26055,7 @@ const optional$3 = /*#__PURE__*/ lambda((self) => {
 * @since 3.10.0
 */
 function Literal(literal) {
-	const out = make$8(new Literal$1(literal), {
+	const out = make$9(new Literal$1(literal), {
 		literal,
 		transform(to) {
 			return out.pipe(decodeTo(Literal(to), {
@@ -26191,7 +26079,7 @@ function Literal(literal) {
 * @category schemas
 * @since 3.10.0
 */
-const Unknown = /*#__PURE__*/ make$8(unknown$1);
+const Unknown = /*#__PURE__*/ make$9(unknown$1);
 /**
 * Schema for the `null` literal. Validates that the input is strictly `null`.
 *
@@ -26200,7 +26088,7 @@ const Unknown = /*#__PURE__*/ make$8(unknown$1);
 * @category schemas
 * @since 3.10.0
 */
-const Null = /*#__PURE__*/ make$8(null_);
+const Null = /*#__PURE__*/ make$9(null_);
 /**
 * Schema for the `undefined` literal. Validates that the input is strictly `undefined`.
 *
@@ -26209,7 +26097,7 @@ const Null = /*#__PURE__*/ make$8(null_);
 * @category schemas
 * @since 3.10.0
 */
-const Undefined = /*#__PURE__*/ make$8(undefined_);
+const Undefined = /*#__PURE__*/ make$9(undefined_);
 /**
 * Schema for `string` values. Validates that the input is `typeof` `"string"`.
 *
@@ -26217,7 +26105,7 @@ const Undefined = /*#__PURE__*/ make$8(undefined_);
 * @category schemas
 * @since 4.0.0
 */
-const String$7 = /*#__PURE__*/ make$8(string$1);
+const String$7 = /*#__PURE__*/ make$9(string$1);
 /**
 * Schema for `number` values, including `NaN`, `Infinity`, and `-Infinity`.
 *
@@ -26233,7 +26121,7 @@ const String$7 = /*#__PURE__*/ make$8(string$1);
 * @category schemas
 * @since 4.0.0
 */
-const Number$2 = /*#__PURE__*/ make$8(number$2);
+const Number$2 = /*#__PURE__*/ make$9(number$2);
 /**
 * Schema for `boolean` values. Validates that the input is `typeof` `"boolean"`.
 *
@@ -26247,9 +26135,9 @@ const Number$2 = /*#__PURE__*/ make$8(number$2);
 * @category schemas
 * @since 4.0.0
 */
-const Boolean$4 = /*#__PURE__*/ make$8(boolean$2);
+const Boolean$4 = /*#__PURE__*/ make$9(boolean$2);
 function makeStruct(ast, fields) {
-	return make$8(ast, {
+	return make$9(ast, {
 		fields,
 		mapFields(f, options) {
 			const fields = f(this.fields);
@@ -26335,7 +26223,7 @@ function Struct(fields) {
 * @since 3.10.0
 */
 function Record(key, value) {
-	return make$8(record$1(key.ast, value.ast), {
+	return make$9(record$1(key.ast, value.ast), {
 		key,
 		value
 	});
@@ -26344,9 +26232,9 @@ function Record(key, value) {
 * @category constructors
 * @since 4.0.0
 */
-const ArraySchema = /*#__PURE__*/ lambda((schema) => make$8(new Arrays(false, [], [schema.ast]), { value: schema }));
+const ArraySchema = /*#__PURE__*/ lambda((schema) => make$9(new Arrays(false, [], [schema.ast]), { value: schema }));
 function makeUnion(ast, members) {
-	return make$8(ast, {
+	return make$9(ast, {
 		members,
 		mapMembers(f, options) {
 			const members = f(this.members);
@@ -26401,7 +26289,7 @@ function Union(members, options) {
 */
 function Literals$2(literals) {
 	const members = literals.map(Literal);
-	return make$8(union$1(members, void 0, void 0), {
+	return make$9(union$1(members, void 0, void 0), {
 		literals,
 		members,
 		mapMembers(f) {
@@ -26433,7 +26321,7 @@ const NullOr = /*#__PURE__*/ lambda((self) => Union([self, Null]));
 const UndefinedOr = /*#__PURE__*/ lambda((self) => Union([self, Undefined]));
 function decodeTo(to, transformation) {
 	return (from) => {
-		return make$8(decodeTo$1(from.ast, to.ast, transformation ? makeTransformation(transformation) : passthrough()), {
+		return make$9(decodeTo$1(from.ast, to.ast, transformation ? makeTransformation(transformation) : passthrough()), {
 			from,
 			to
 		});
@@ -26488,7 +26376,7 @@ const BooleanLiterals = /*#__PURE__*/ Literals$2([...TrueLiterals.literals, ...F
 * @since 3.10.0
 */
 function withConstructorDefault(defaultValue) {
-	return (schema) => make$8(withConstructorDefault$1(schema.ast, defaultValue), { schema });
+	return (schema) => make$9(withConstructorDefault$1(schema.ast, defaultValue), { schema });
 }
 /**
 * Combines a {@link Literal} schema with {@link withConstructorDefault}, making it ideal
@@ -26637,7 +26525,7 @@ const makeFilter = makeFilter$1;
 * @category schemas
 * @since 3.10.0
 */
-const Finite$3 = /*#__PURE__*/ make$8(finite);
+const Finite$3 = /*#__PURE__*/ make$9(finite);
 /**
 * Validates that a number is a safe integer (within the safe integer range
 * that can be exactly represented in JavaScript).
@@ -26822,7 +26710,7 @@ function makeClass(Inherited, identifier, struct$1, annotations, proto) {
 			return getClassSchema(this).rebuild(ast);
 		}
 		static make(input, options) {
-			return make$10(getClassSchema(this))(input ?? {}, options);
+			return make$11(getClassSchema(this))(input ?? {}, options);
 		}
 		static makeOption(input, options) {
 			return makeOption(getClassSchema(this))(input ?? {}, options);
@@ -26882,7 +26770,7 @@ function getClassSchemaFactory(from, identifier, annotations) {
 		const ClassTypeId = getClassTypeId(identifier);
 		const isClassValue = (input) => input instanceof self || hasProperty(input, ClassTypeId);
 		const transformation = getClassTransformation(self);
-		return memo = decodeTo(make$8(new Declaration([from.ast], () => (input, ast, options) => {
+		return memo = decodeTo(make$9(new Declaration([from.ast], () => (input, ast, options) => {
 			return isClassValue(input) ? succeed$2(input) : fail$3(new InvalidType(ast, input, options));
 		}, {
 			identifier,
@@ -27007,7 +26895,7 @@ const toCodecStringTree = toCodecStringTree$1;
 * @category schemas
 * @since 4.0.0
 */
-const Json = /*#__PURE__*/ make$8(/*#__PURE__*/ annotate$1(Json$1, { toCode: () => ({
+const Json = /*#__PURE__*/ make$9(/*#__PURE__*/ annotate$1(Json$1, { toCode: () => ({
 	runtime: "Schema.Json",
 	Type: "Schema.Json"
 }) }));
@@ -27090,7 +26978,7 @@ const Terminal = /*#__PURE__*/ Service$3("effect/Terminal");
 * @category constructors
 * @since 4.0.0
 */
-const make$7 = (impl) => Terminal.of({
+const make$8 = (impl) => Terminal.of({
 	...impl,
 	[TypeId$12]: TypeId$12
 });
@@ -27105,7 +26993,7 @@ const make$7 = (impl) => Terminal.of({
 const layer$7 = /*#__PURE__*/ effect(Terminal, /*#__PURE__*/ (/* @__PURE__ */ fnUntraced(function* (shouldQuit = defaultShouldQuit) {
 	const stdin = process.stdin;
 	const stdout = process.stdout;
-	const lines = yield* make$26();
+	const lines = yield* make$27();
 	let inputEnded = stdin.readableEnded;
 	let readlineActive = false;
 	const onStdinEnd = () => {
@@ -27114,7 +27002,7 @@ const layer$7 = /*#__PURE__*/ effect(Terminal, /*#__PURE__*/ (/* @__PURE__ */ fn
 	};
 	stdin.once("end", onStdinEnd);
 	yield* addFinalizer(() => sync(() => stdin.off("end", onStdinEnd)));
-	const rlRef = yield* make$24({
+	const rlRef = yield* make$25({
 		acquire: acquireRelease(sync(() => {
 			const rl = readline.createInterface({
 				input: stdin,
@@ -27146,14 +27034,14 @@ const layer$7 = /*#__PURE__*/ effect(Terminal, /*#__PURE__*/ (/* @__PURE__ */ fn
 	const setRawMode = (enabled) => sync(() => {
 		if (stdin.isTTY) stdin.setRawMode(enabled);
 	});
-	const rawModeRef = yield* make$24({
+	const rawModeRef = yield* make$25({
 		acquire: acquireRelease(setRawMode(true), () => setRawMode(false)),
 		idleTimeToLive: "10 millis"
 	});
 	const columns = sync(() => stdout.columns ?? 0);
 	const rows = sync(() => stdout.rows ?? 0);
 	const readInput = gen(function* () {
-		const queue = yield* make$26();
+		const queue = yield* make$27();
 		const handleKeypress = (s, k) => {
 			const userInput = {
 				input: fromUndefinedOr(s),
@@ -27198,7 +27086,7 @@ const layer$7 = /*#__PURE__*/ effect(Terminal, /*#__PURE__*/ (/* @__PURE__ */ fn
 			cause: err
 		}))));
 	}));
-	return make$7({
+	return make$8({
 		columns,
 		rows,
 		readInput,
@@ -27398,78 +27286,36 @@ const log = (...args) => consoleWith((console) => sync$1(() => {
 */
 const CurrentLoggers = CurrentLoggers$1;
 /**
-* Context reference that routes the built-in default logger and TTY pretty
-* console logger to stderr.
-*
-* **When to use**
-*
-* Use to route built-in logger output to stderr while keeping stdout reserved
-* for protocol messages or data output.
+* Creates a new `Logger` from a log function.
 *
 * **Details**
 *
-* The reference defaults to `false`. Providing `true` makes the affected
-* loggers call `console.error` instead of `console.log`.
+* The log function receives an options object containing the message, log level,
+* cause, fiber information, and timestamp, and should return the desired output.
 *
-* @see {@link defaultLogger} for the runtime logger affected by this reference
-* @see {@link consolePretty} for the TTY-mode pretty console logger affected by this reference
-* @see {@link withConsoleError} for routing a specific formatter logger to `console.error`
-*
-* @stability stable
-* @category services
-* @since 4.0.0
-*/
-const LogToStderr = LogToStderr$1;
-/**
-* A `Logger` which outputs logs in a "pretty" format and writes them to the
-* console. Chooses between tty and browser implementation. If the runtime
-* platform is known and fixed, prefer {@link consolePrettyBrowser} or
-* {@link consolePrettyTty}.
-*
-* **Details**
-*
-* For example, pretty output can render as
-* `[09:37:17.579] INFO (#1) label=0ms: hello` followed by an annotation line
-* such as `key: value`.
-*
-* **Example** (Logging with pretty console output)
+* **Example** (Creating loggers from functions)
 *
 * ```ts import.meta.vitest
 * import { Effect, Logger } from "effect"
 *
-* const prettyLogger = Logger.layer([Logger.consolePretty()])
-*
-* Effect.log("hello").pipe(
-*   Effect.withLogSpan('label'),
-*   Effect.annotateLogs('key', 'value'),
-*   Effect.provide(prettyLogger),
-*   Effect.runSync
+* const outputs: Array<string> = []
+* const textLogger = Logger.make((options) =>
+*   `${options.logLevel}: ${options.message}`
 * )
+* const collector = Logger.make((options) => outputs.push(textLogger.log(options)))
+*
+* const program = Effect.log("Hello World").pipe(
+*   Effect.provide(Logger.layer([collector]))
+* )
+* Effect.runSync(program)
+* outputs // => ["Info: Hello World"]
 * ```
 *
-* **Example** (Logging with console.error, when the environment has TTY)
-*
-* ```ts import.meta.vitest
-* import { Effect, Layer, Logger } from "effect"
-*
-* const prettyLoggerLayer = Layer.merge(
-*   Logger.layer([Logger.consolePretty()]),
-*   Layer.succeed(Logger.LogToStderr, true)
-* )
-*
-* Effect.log('hello').pipe(
-*   Effect.provide(prettyLoggerLayer),
-*   Effect.runSync
-* )
-* ```
-*
-* @see {@link consolePrettyBrowser} for browser-specific implementation
-* @see {@link consolePrettyTty} for the TTY-mode implementation
 * @stability stable
 * @category constructors
-* @since 4.0.0
+* @since 2.0.0
 */
-const consolePretty = consolePretty$1;
+const make$6 = loggerMake;
 /**
 * Creates a `Layer` which will overwrite the current set of loggers with the
 * specified array of `loggers`.
@@ -28195,7 +28041,7 @@ const toConfigCursorAST = /*#__PURE__*/ memoize((root) => {
 function schema(codec, path) {
 	const codecStringTree = toCodecStringTree(codec);
 	const encodedAst = toEncoded(codecStringTree.ast);
-	const decodeCursor = decodeUnknownEffect$1(make$8(toConfigCursorAST(codecStringTree.ast)));
+	const decodeCursor = decodeUnknownEffect$1(make$9(toConfigCursorAST(codecStringTree.ast)));
 	const localPath = typeof path === "string" ? [path] : path ?? [];
 	return make$4((provider, pathPrefix) => {
 		const fullPath = [...pathPrefix, ...localPath];
@@ -29640,7 +29486,7 @@ const map$1 = /*#__PURE__*/ dual(2, (self, f) => flatMap(self, (a) => succeed(f(
 * @category constructors
 * @since 4.0.0
 */
-const Password = (options) => basePrompt(options, "password").pipe(map$1(make$13));
+const Password = (options) => basePrompt(options, "password").pipe(map$1(make$14));
 /**
 * Runs a prompt by reading terminal input and rendering prompt frames until the
 * prompt submits a value.
@@ -35328,7 +35174,7 @@ const runWith = (command, config) => {
 		}
 		const services = match$5(logLevel, {
 			onNone: () => empty$7(),
-			onSome: (level) => make$34(MinimumLogLevel, level)
+			onSome: (level) => make$35(MinimumLogLevel, level)
 		});
 		yield* provideContext(program, services);
 	}, catchFilter((error) => isCliError(error) && error._tag === "ShowHelp" ? succeed$6(error) : fail$7(error), (error) => andThen(showHelp(command, error, config.renderErrors !== false), fail$3(error))), catchFilter((error) => config.renderErrors !== false && isCliError(error) && error._tag === "UserError" ? succeed$6(error) : fail$7(error), (error) => andThen(showUserError(error), fail$3(error))), catchFilter((e) => isQuitError(e) ? succeed$6(e) : fail$7(e), (_) => interrupt$1));
@@ -36577,7 +36423,7 @@ const layer$2 = effect(Service$2, gen(function* () {
 	const fs = yield* FileSystem;
 	const path = yield* Path$1;
 	const spawner = yield* ChildProcessSpawner;
-	const run = (command, args, timeout$2) => spawner.string(make$18(command, args)).pipe(timeout(timeout$2), mapError((error) => new BrowserError({ message: `\`${command} ${args.join(" ")}\` failed: ${error.message}` })));
+	const run = (command, args, timeout$2) => spawner.string(make$19(command, args)).pipe(timeout(timeout$2), mapError((error) => new BrowserError({ message: `\`${command} ${args.join(" ")}\` failed: ${error.message}` })));
 	const close = (browser) => promise(() => browser.close()).pipe(ignore);
 	const downloadChromium = fn("Browser.downloadChromium")(function* (timeout) {
 		const cli = yield* path.fromFileUrl(new URL(import.meta.resolve("playwright-core/cli.js"))).pipe(mapError(() => new BrowserError({ message: "Could not locate playwright-core's CLI" })));
@@ -37503,7 +37349,7 @@ const write = fn("Clipboard.write")(function* (html) {
 	const spawner = yield* ChildProcessSpawner;
 	const file = yield* fs.makeTempFileScoped({ suffix: ".html" });
 	yield* fs.writeFileString(file, `<x-paper-html>${html}</x-paper-html>`);
-	const exitCode = yield* spawner.exitCode(make$18("osascript", [
+	const exitCode = yield* spawner.exitCode(make$19("osascript", [
 		"-l",
 		"JavaScript",
 		"-e",
@@ -54767,7 +54613,7 @@ const NodeInfo = fromJsonString(Struct({
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snapshot",
-		version: "0.1.2"
+		version: "0.1.3"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -55246,7 +55092,7 @@ const handler = fn("paper-snapshot")(function* (input) {
 		refresh: input.refreshExtension
 	});
 	yield* logDebug(`Paper Snapshot ${serializer.version} from ${serializer.origin}`);
-	const runScope = yield* make$31();
+	const runScope = yield* make$32();
 	yield* addFinalizer((exit) => close(runScope, exit));
 	const hasUrl = jobs.some((job) => isSome(job.url));
 	const sources = yield* resolveSources(input, hasUrl, home, localAppData);
@@ -55419,10 +55265,22 @@ const command = make$3("paper-snapshot", flags, run).pipe(withDescription("Snaps
 	}
 ]));
 //#endregion
+//#region src/log.ts
+/** Human-readable log lines on stderr: `› step`, `✓ result`, `! warning`, `✗ error`. */
+const colored = process.stderr.isTTY === true;
+const paint = (code, text) => colored ? `\u001B[${code}m${text}\u001B[0m` : text;
+/** Lines that report something the user asked for, rather than a step on the way. */
+const outcome = /^(?:Created|Replaced) artboard|^Copied to the clipboard/;
+//#endregion
 //#region src/bin.ts
-const LoggerLive = mergeAll(layer$4([consolePretty()]), succeed$3(LogToStderr, true));
+const LoggerLive = layer$4([make$6((options) => {
+	const message = options.message;
+	const text = Array.isArray(message) ? message.map(String).join(" ") : String(message);
+	const mark = value(options.logLevel).pipe(when("Warn", () => paint(33, "!")), when("Error", () => paint(31, "✗")), when("Fatal", () => paint(31, "✗")), when("Info", () => outcome.test(text) ? paint(32, "✓") : paint(2, "›")), orElse(() => paint(2, "·")));
+	process.stderr.write(`${mark} ${text}\n`);
+})]);
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.1.2" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.1.3" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);
