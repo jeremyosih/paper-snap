@@ -601,6 +601,71 @@ function isBoolean$1(input) {
 	return typeof input === "boolean";
 }
 /**
+* Checks whether a value is a `symbol`.
+*
+* **When to use**
+*
+* Use when you need a `Predicate` guard to narrow an `unknown` value to a
+* symbol.
+*
+* **Details**
+*
+* Uses `typeof input === "symbol"`.
+*
+* **Example** (Guarding symbols)
+*
+* ```ts import.meta.vitest
+* import { Predicate } from "effect"
+*
+* const data: unknown = Symbol.for("id")
+*
+* if (Predicate.isSymbol(data)) {
+*   data.description // => "id"
+* }
+* ```
+*
+* @see {@link isPropertyKey}
+* @category guards
+* @since 2.0.0
+*/
+function isSymbol(input) {
+	return typeof input === "symbol";
+}
+/**
+* Checks whether a value is a valid `PropertyKey` (string, number, or symbol).
+*
+* **When to use**
+*
+* Use when you need a `Predicate` guard for unknown property keys before
+* indexing.
+*
+* **Details**
+*
+* Uses `isString`, `isNumber`, and `isSymbol`.
+*
+* **Example** (Guarding property keys)
+*
+* ```ts import.meta.vitest
+* import { Predicate } from "effect"
+*
+* const key: unknown = "name"
+* const obj: Record<PropertyKey, unknown> = { name: "Ada" }
+*
+* if (Predicate.isPropertyKey(key) && key in obj) {
+*   obj[key] // => "Ada"
+* }
+* ```
+*
+* @see {@link isString}
+* @see {@link isNumber}
+* @see {@link isSymbol}
+* @category guards
+* @since 4.0.0
+*/
+function isPropertyKey(u) {
+	return isString(u) || isNumber(u) || isSymbol(u);
+}
+/**
 * Checks whether a value is a `function`.
 *
 * **When to use**
@@ -946,6 +1011,35 @@ const isTagged = /*#__PURE__*/ dual(2, (self, tag) => hasProperty(self, "_tag") 
 */
 function isError(input) {
 	return input instanceof Error;
+}
+/**
+* Checks whether a value is iterable.
+*
+* **When to use**
+*
+* Use when you need a `Predicate` guard before iterating an unknown value.
+*
+* **Details**
+*
+* Accepts strings as iterable and uses `hasProperty` for `Symbol.iterator`.
+*
+* **Example** (Guarding iterables)
+*
+* ```ts import.meta.vitest
+* import { Predicate } from "effect"
+*
+* const data: unknown = [1, 2, 3]
+*
+* Predicate.isIterable(data) // => true
+* ```
+*
+* @see {@link isSet}
+* @see {@link isMap}
+* @category guards
+* @since 2.0.0
+*/
+function isIterable(input) {
+	return hasProperty(input, Symbol.iterator) || isString(input);
 }
 //#endregion
 //#region node_modules/effect/dist/Hash.js
@@ -2692,7 +2786,7 @@ const Prototype = (options) => makePrimitiveProto({
 * @category constructors
 * @since 2.0.0
 */
-const make$34 = (isEquivalent) => (self, that) => self === that || isEquivalent(self, that);
+const make$35 = (isEquivalent) => (self, that) => self === that || isEquivalent(self, that);
 const isStrictEquivalent = (x, y) => x === y;
 /**
 * Creates an equivalence relation that uses strict equality (`===`) to compare values.
@@ -2800,7 +2894,7 @@ const strictEqual = () => isStrictEquivalent;
 * @since 4.0.0
 */
 function Tuple$1(elements) {
-	return make$34((self, that) => {
+	return make$35((self, that) => {
 		if (self.length !== that.length) return false;
 		for (let i = 0; i < self.length; i++) if (!elements[i](self[i], that[i])) return false;
 		return true;
@@ -2810,7 +2904,7 @@ function Tuple$1(elements) {
 * @since 4.0.0
 */
 function Array_(item) {
-	return make$34((self, that) => {
+	return make$35((self, that) => {
 		if (self.length !== that.length) return false;
 		for (let i = 0; i < self.length; i++) if (!item(self[i], that[i])) return false;
 		return true;
@@ -3007,7 +3101,7 @@ const succeed$7 = (success) => {
 * @category constructors
 * @since 2.0.0
 */
-function make$33(compare) {
+function make$34(compare) {
 	return (self, that) => self === that ? 0 : compare(self, that);
 }
 /**
@@ -3041,7 +3135,7 @@ function make$33(compare) {
 * @category instances
 * @since 4.0.0
 */
-const Number$5 = /*#__PURE__*/ make$33((self, that) => {
+const Number$5 = /*#__PURE__*/ make$34((self, that) => {
 	if (globalThis.Number.isNaN(self) && globalThis.Number.isNaN(that)) return 0;
 	if (globalThis.Number.isNaN(self)) return -1;
 	if (globalThis.Number.isNaN(that)) return 1;
@@ -3079,7 +3173,7 @@ const Number$5 = /*#__PURE__*/ make$33((self, that) => {
 * @category mapping
 * @since 2.0.0
 */
-const mapInput = /*#__PURE__*/ dual(2, (self, f) => make$33((b1, b2) => self(f(b1), f(b2))));
+const mapInput = /*#__PURE__*/ dual(2, (self, f) => make$34((b1, b2) => self(f(b1), f(b2))));
 /**
 * Checks whether one value is strictly greater than another according to the given order.
 *
@@ -3284,6 +3378,36 @@ const match$5 = /*#__PURE__*/ dual(2, (self, { onNone, onSome }) => isNone(self)
 * @since 2.0.0
 */
 const getOrElse = /*#__PURE__*/ dual(2, (self, onNone) => isNone(self) ? onNone() : self.value);
+/**
+* Returns the fallback `Option` if `self` is `None`; otherwise returns `self`.
+*
+* **When to use**
+*
+* Use when you need a lazy fallback `Option`, such as when building priority
+* chains of optional values.
+*
+* **Details**
+*
+* - `Some` → returns `self` unchanged
+* - `None` → evaluates and returns `that()`
+* - `that` is lazily evaluated
+*
+* **Example** (Providing a fallback Option)
+*
+* ```ts import.meta.vitest
+* import { Option } from "effect"
+*
+* Option.none().pipe(Option.orElse(() => Option.some("b"))) // => Option.some("b")
+* Option.some("a").pipe(Option.orElse(() => Option.some("b"))) // => Option.some("a")
+* ```
+*
+* @see {@link orElseSome} to wrap the fallback value in `Some` automatically
+* @see {@link firstSomeOf} to pick the first `Some` from a collection
+*
+* @category error handling
+* @since 2.0.0
+*/
+const orElse$2 = /*#__PURE__*/ dual(2, (self, that) => isNone(self) ? that() : self);
 /**
 * Converts a nullable value (`null` or `undefined`) into an `Option`.
 *
@@ -3667,7 +3791,7 @@ const ServiceProto = {
 		return self;
 	},
 	context(self) {
-		return make$32(this, self);
+		return make$33(this, self);
 	},
 	use(f) {
 		return withFiber$1((fiber) => f(get$2(fiber.context, this)));
@@ -3867,7 +3991,7 @@ const emptyContext = /*#__PURE__*/ makeUnsafe$5(/*#__PURE__*/ new Map());
 * @category constructors
 * @since 2.0.0
 */
-const make$32 = (key, service) => makeUnsafe$5(/* @__PURE__ */ new Map([[key.key, service]]));
+const make$33 = (key, service) => makeUnsafe$5(/* @__PURE__ */ new Map([[key.key, service]]));
 /**
 * Adds a service to a given `Context`.
 *
@@ -5125,7 +5249,7 @@ const fromInputUnsafe = (input) => {
 				if (Number.isNaN(input[0]) || Number.isNaN(input[1])) return zero$1;
 				if (input[0] === -Infinity || input[1] === -Infinity) return negativeInfinity;
 				if (input[0] === Infinity || input[1] === Infinity) return infinity;
-				return make$31(roundTiesAwayFromZero(input[0] * 1e9 + input[1]));
+				return make$32(roundTiesAwayFromZero(input[0] * 1e9 + input[1]));
 			}
 			const obj = input;
 			let millis = 0;
@@ -5135,8 +5259,8 @@ const fromInputUnsafe = (input) => {
 			if (obj.minutes) millis += obj.minutes * 6e4;
 			if (obj.seconds) millis += obj.seconds * 1e3;
 			if (obj.milliseconds) millis += obj.milliseconds;
-			if (!obj.microseconds && !obj.nanoseconds) return make$31(millis);
-			return make$31(roundTiesAwayFromZero(millis * 1e6 + (obj.microseconds ?? 0) * 1e3 + (obj.nanoseconds ?? 0)));
+			if (!obj.microseconds && !obj.nanoseconds) return make$32(millis);
+			return make$32(roundTiesAwayFromZero(millis * 1e6 + (obj.microseconds ?? 0) * 1e3 + (obj.nanoseconds ?? 0)));
 		}
 	}
 	return invalid(input);
@@ -5202,7 +5326,7 @@ const DurationProto = {
 		return pipeArguments(this, arguments);
 	}
 };
-const make$31 = (input) => {
+const make$32 = (input) => {
 	const duration = Object.create(DurationProto);
 	if (typeof input === "number") {
 		if (isNaN(input) || input === 0 || Object.is(input, -0)) duration.value = zeroDurationValue;
@@ -5268,7 +5392,7 @@ const isFinite$1 = (self) => self.value._tag !== "Infinity" && self.value._tag !
 * @category constructors
 * @since 2.0.0
 */
-const zero$1 = /*#__PURE__*/ make$31(0);
+const zero$1 = /*#__PURE__*/ make$32(0);
 /**
 * A Duration representing infinite time.
 *
@@ -5283,7 +5407,7 @@ const zero$1 = /*#__PURE__*/ make$31(0);
 * @category constructors
 * @since 2.0.0
 */
-const infinity = /*#__PURE__*/ make$31(Infinity);
+const infinity = /*#__PURE__*/ make$32(Infinity);
 /**
 * A Duration representing negative infinite time.
 *
@@ -5298,7 +5422,7 @@ const infinity = /*#__PURE__*/ make$31(Infinity);
 * @category constructors
 * @since 4.0.0
 */
-const negativeInfinity = /*#__PURE__*/ make$31(-Infinity);
+const negativeInfinity = /*#__PURE__*/ make$32(-Infinity);
 /**
 * Creates a Duration from nanoseconds.
 *
@@ -5313,7 +5437,7 @@ const negativeInfinity = /*#__PURE__*/ make$31(-Infinity);
 * @category constructors
 * @since 2.0.0
 */
-const nanos = (nanos) => make$31(nanos);
+const nanos = (nanos) => make$32(nanos);
 /**
 * Creates a Duration from milliseconds.
 *
@@ -5328,7 +5452,7 @@ const nanos = (nanos) => make$31(nanos);
 * @category constructors
 * @since 2.0.0
 */
-const millis = (millis) => make$31(millis);
+const millis = (millis) => make$32(millis);
 /**
 * Creates a Duration from seconds.
 *
@@ -5343,7 +5467,7 @@ const millis = (millis) => make$31(millis);
 * @category constructors
 * @since 2.0.0
 */
-const seconds = (seconds) => make$31(seconds * 1e3);
+const seconds = (seconds) => make$32(seconds * 1e3);
 /**
 * Creates a Duration from minutes.
 *
@@ -5358,7 +5482,7 @@ const seconds = (seconds) => make$31(seconds * 1e3);
 * @category constructors
 * @since 2.0.0
 */
-const minutes = (minutes) => make$31(minutes * 6e4);
+const minutes = (minutes) => make$32(minutes * 6e4);
 /**
 * Creates a Duration from hours.
 *
@@ -5373,7 +5497,7 @@ const minutes = (minutes) => make$31(minutes * 6e4);
 * @category constructors
 * @since 2.0.0
 */
-const hours = (hours) => make$31(hours * 36e5);
+const hours = (hours) => make$32(hours * 36e5);
 /**
 * Creates a Duration from days.
 *
@@ -5388,7 +5512,7 @@ const hours = (hours) => make$31(hours * 36e5);
 * @category constructors
 * @since 2.0.0
 */
-const days = (days) => make$31(days * 864e5);
+const days = (days) => make$32(days * 864e5);
 /**
 * Creates a Duration from weeks.
 *
@@ -5403,7 +5527,7 @@ const days = (days) => make$31(days * 864e5);
 * @category constructors
 * @since 2.0.0
 */
-const weeks = (weeks) => make$31(weeks * 6048e5);
+const weeks = (weeks) => make$32(weeks * 6048e5);
 /**
 * Converts a Duration to milliseconds.
 *
@@ -6045,7 +6169,7 @@ var ParentSpan = class extends (/*#__PURE__*/ Service$3()(ParentSpanKey, { fiber
 * @category constructors
 * @since 2.0.0
 */
-const make$30 = (options) => options;
+const make$31 = (options) => options;
 /**
 * Context reference for disabling trace propagation.
 *
@@ -6157,7 +6281,7 @@ const TracerKey = "effect/Tracer";
 */
 const Tracer = /*#__PURE__*/ Reference(TracerKey, {
 	fiberCached: true,
-	defaultValue: () => make$30({ span: (options) => new NativeSpan(options) })
+	defaultValue: () => make$31({ span: (options) => new NativeSpan(options) })
 });
 /**
 * Default in-memory `Span` implementation used by the native tracer. It
@@ -6596,7 +6720,7 @@ var FiberImpl = class {
 	interruptUnsafe(fiberId, annotations) {
 		if (this._exit) return;
 		let cause = causeInterrupt(fiberId);
-		if (this.currentStackFrame) cause = causeAnnotate(cause, make$32(StackTraceKey, this.currentStackFrame));
+		if (this.currentStackFrame) cause = causeAnnotate(cause, make$33(StackTraceKey, this.currentStackFrame));
 		if (annotations) cause = causeAnnotate(cause, annotations);
 		this._interruptedCause = this._interruptedCause ? causeCombine(this._interruptedCause, cause) : cause;
 		if (this.interruptible) {
@@ -7421,6 +7545,8 @@ const scopeMakeUnsafe = (finalizerStrategy = "sequential") => ({
 });
 const constScopeEmpty = { _tag: "Empty" };
 /** @internal */
+const scopeMake = (finalizerStrategy) => sync$1(() => scopeMakeUnsafe(finalizerStrategy));
+/** @internal */
 const scope$1 = scopeTag;
 /** @internal */
 const provideScope = /*#__PURE__*/ provideService$1(scopeTag);
@@ -7554,6 +7680,20 @@ const uninterruptibleMask$1 = (f) => withFiber$1((fiber) => {
 	fiber._stack.push(setInterruptibleTrue);
 	return f(interruptible);
 });
+/** @internal */
+const all$1 = (arg, options) => {
+	if (isIterable(arg)) return options?.mode === "result" ? forEach$2(arg, result$2, options) : forEach$2(arg, identity, options);
+	else if (options?.discard) return options.mode === "result" ? forEach$2(Object.values(arg), result$2, options) : forEach$2(Object.values(arg), identity, options);
+	return suspend$3(() => {
+		const out = {};
+		return as$1(forEach$2(Object.entries(arg), ([key, effect]) => map$8(options?.mode === "result" ? result$2(effect) : effect, (value) => {
+			assignProperty(out, key, value);
+		}), {
+			discard: true,
+			concurrency: options?.concurrency
+		}), out);
+	});
+};
 /** @internal */
 const whileLoop$1 = /*#__PURE__*/ makePrimitive$1({
 	op: "While",
@@ -8993,6 +9133,30 @@ const MinimumLogLevel = MinimumLogLevel$1;
 */
 const Scope = scopeTag;
 /**
+* Creates a new `Scope` with the specified finalizer strategy.
+*
+* **Example** (Creating a scope)
+*
+* ```ts import.meta.vitest
+* import { Effect, Exit, Scope } from "effect"
+*
+* const cleanups: Array<string> = []
+* const program = Effect.gen(function*() {
+*   const scope = yield* Scope.make("sequential")
+*   yield* Scope.addFinalizer(scope, Effect.sync(() => cleanups.push("Cleanup 1")))
+*   yield* Scope.addFinalizer(scope, Effect.sync(() => cleanups.push("Cleanup 2")))
+*   yield* Scope.close(scope, Exit.void)
+* })
+*
+* Effect.runSync(program)
+* cleanups // => ["Cleanup 2", "Cleanup 1"]
+* ```
+*
+* @category constructors
+* @since 2.0.0
+*/
+const make$30 = scopeMake;
+/**
 * Creates a new `Scope` synchronously without wrapping it in an `Effect`.
 * This is useful when you need a scope immediately but should be used with caution
 * as it doesn't provide the same safety guarantees as the `Effect`-wrapped version.
@@ -9552,8 +9716,8 @@ const buildWithScope = /*#__PURE__*/ dual(2, (self, scope) => withFiber$1((fiber
 * @since 2.0.0
 */
 const succeed$3 = function() {
-	if (arguments.length === 1) return (resource) => succeedContext(make$32(arguments[0], resource));
-	return succeedContext(make$32(arguments[0], arguments[1]));
+	if (arguments.length === 1) return (resource) => succeedContext(make$33(arguments[0], resource));
+	return succeedContext(make$33(arguments[0], arguments[1]));
 };
 /**
 * Constructs a layer that provides all services in an already available
@@ -9645,7 +9809,7 @@ const effect = function() {
 	if (arguments.length === 1) return (effect) => effectImpl(arguments[0], effect);
 	return effectImpl(arguments[0], arguments[1]);
 };
-const effectImpl = (service, effect) => effectContext(map$8(effect, (value) => make$32(service, value)));
+const effectImpl = (service, effect) => effectContext(map$8(effect, (value) => make$33(service, value)));
 /**
 * Constructs a layer from an effect that produces all services in a `Context`.
 *
@@ -10195,6 +10359,119 @@ const provide$1 = /*#__PURE__*/ dual((args) => isEffect$1(args[0]), (self, sourc
 * @since 2.0.0
 */
 const isEffect = isEffect$1;
+/**
+* Combines an iterable or record of effects into one effect whose success shape
+* follows the input.
+*
+* **When to use**
+*
+* Use to run a known collection of effects and collect results in the same
+* tuple, iterable, or record shape.
+*
+* **Details**
+*
+* Tuple and iterable inputs collect results in order. Record inputs collect
+* results under the same keys. By default, the combined effect fails on the
+* first failure; with concurrent execution, effects that have already started
+* may be interrupted, while effects not yet started are skipped.
+*
+* Options:
+*
+* Use `concurrency` to control sequential or concurrent execution. Use
+* `mode: "result"` to run every effect and collect each success or failure as a
+* `Result` in the same output shape. Use `discard: true` to ignore successful
+* values and return `void`.
+*
+* **Example** (Collecting tuple results in order)
+*
+* ```ts import.meta.vitest
+* import { Effect } from "effect"
+*
+* const tupleOfEffects = [
+*   Effect.succeed(42),
+*   Effect.succeed("Hello")
+* ] as const
+*
+* //      ┌─── Effect<[number, string], never, never>
+* //      ▼
+* const resultsAsTuple = Effect.all(tupleOfEffects)
+*
+* await Effect.runPromise(resultsAsTuple) // => [42, "Hello"]
+* ```
+*
+* **Example** (Collecting iterable results in order)
+*
+* ```ts import.meta.vitest
+* import { Effect } from "effect"
+*
+* const iterableOfEffects: Iterable<Effect.Effect<number>> = [1, 2, 3].map(
+*   Effect.succeed
+* )
+*
+* //      ┌─── Effect<number[], never, never>
+* //      ▼
+* const resultsAsArray = Effect.all(iterableOfEffects)
+*
+* await Effect.runPromise(resultsAsArray) // => [1, 2, 3]
+* ```
+*
+* **Example** (Collecting struct results by key)
+*
+* ```ts import.meta.vitest
+* import { Effect } from "effect"
+*
+* const structOfEffects = {
+*   a: Effect.succeed(42),
+*   b: Effect.succeed("Hello")
+* }
+*
+* //      ┌─── Effect<{ a: number; b: string; }, never, never>
+* //      ▼
+* const resultsAsStruct = Effect.all(structOfEffects)
+*
+* await Effect.runPromise(resultsAsStruct) // => { a: 42, b: "Hello" }
+* ```
+*
+* **Example** (Collecting record results by key)
+*
+* ```ts import.meta.vitest
+* import { Effect } from "effect"
+*
+* const recordOfEffects: Record<string, Effect.Effect<number>> = {
+*   key1: Effect.succeed(1),
+*   key2: Effect.succeed(2)
+* }
+*
+* //      ┌─── Effect<{ [x: string]: number; }, never, never>
+* //      ▼
+* const resultsAsRecord = Effect.all(recordOfEffects)
+*
+* await Effect.runPromise(resultsAsRecord) // => { key1: 1, key2: 2 }
+* ```
+*
+* **Example** (Stopping on the first failure)
+*
+* ```ts import.meta.vitest
+* import { Effect, Exit } from "effect"
+* const output: Array<unknown> = []
+* const record = (value: unknown) => Effect.sync(() => { output.push(value) })
+*
+* const program = Effect.all([
+*   Effect.succeed("Task1").pipe(Effect.tap(record)),
+*   Effect.fail("Task2: Oh no!").pipe(Effect.tap(record)),
+*   // Won't execute due to earlier failure
+*   Effect.succeed("Task3").pipe(Effect.tap(record))
+* ])
+*
+* const outcome = await Effect.runPromiseExit(program)
+* const observation = [output, outcome] // => [["Task1"], Exit.fail("Task2: Oh no!")]
+* ```
+*
+* @see {@link forEach} for iterating over elements and applying an effect.
+* @category combining
+* @since 2.0.0
+*/
+const all = all$1;
 /**
 * Executes an effectful operation for each element in an `Iterable`.
 *
@@ -16977,7 +17254,7 @@ const ensuring = /*#__PURE__*/ dual(2, (self, finalizer) => fromChannel(ensuring
 * @category destructors
 * @since 2.0.0
 */
-const run$4 = /*#__PURE__*/ dual(2, (self, sink) => scopedWith((scope) => toPullScoped(self.channel, scope).pipe(flatMap$1((upstream) => sink.transform(upstream, scope)), map$6(([a]) => a))));
+const run$5 = /*#__PURE__*/ dual(2, (self, sink) => scopedWith((scope) => toPullScoped(self.channel, scope).pipe(flatMap$1((upstream) => sink.transform(upstream, scope)), map$6(([a]) => a))));
 /**
 * Runs the stream and collects all elements into an array.
 *
@@ -17179,7 +17456,7 @@ const TypeId$27 = "~effect/platform/FileSystem";
 * @category sizes
 * @since 4.0.0
 */
-const Size = (bytes) => typeof bytes === "bigint" ? bytes : BigInt(bytes);
+const Size$1 = (bytes) => typeof bytes === "bigint" ? bytes : BigInt(bytes);
 const bigint1024 = /*#__PURE__*/ BigInt(1024);
 bigint1024 * bigint1024 * bigint1024 * bigint1024 * bigint1024;
 /**
@@ -17261,9 +17538,9 @@ const make$23 = (impl) => FileSystem.of({
 	stream: fnUntraced(function* (path, options) {
 		const file = yield* impl.open(path, { flag: "r" });
 		if (options?.offset) yield* file.seek(options.offset, "start");
-		const bytesToRead = options?.bytesToRead !== void 0 ? Size(options.bytesToRead) : void 0;
+		const bytesToRead = options?.bytesToRead !== void 0 ? Size$1(options.bytesToRead) : void 0;
 		let totalBytesRead = BigInt(0);
-		const chunkSize = Size(options?.chunkSize ?? 65536);
+		const chunkSize = Size$1(options?.chunkSize ?? 65536);
 		const readChunk = file.readAlloc(chunkSize);
 		return fromPull(succeed$2(flatMap$1(suspend$2(() => {
 			if (bytesToRead !== void 0 && bytesToRead <= totalBytesRead) return done$1();
@@ -18748,7 +19025,7 @@ const abs = (n) => n.value < bigint0 ? make$21(-n.value, n.scale) : n;
 * @category instances
 * @since 2.0.0
 */
-const Equivalence$2 = /*#__PURE__*/ make$34((self, that) => {
+const Equivalence$2 = /*#__PURE__*/ make$35((self, that) => {
 	if (self.scale > that.scale) return scale(that, self.scale).value === self.value;
 	if (self.scale < that.scale) return scale(self, that.scale).value === that.value;
 	return self.value === that.value;
@@ -20948,7 +21225,7 @@ const optionalKey$1 = /*#__PURE__*/ memoizeIdempotent((ast) => {
 });
 const optionalKeyLastLink = /*#__PURE__*/ applyToLastLink(optionalKey$1);
 /** @internal */
-const optional$5 = /*#__PURE__*/ memoize((ast) => optionalKey$1(new Union$1([ast, undefined_], "anyOf")));
+const optional$4 = /*#__PURE__*/ memoize((ast) => optionalKey$1(new Union$1([ast, undefined_], "anyOf")));
 /** @internal */
 function withConstructorDefault$1(ast, defaultValue) {
 	const transformation = new Transformation(withDefault$3(defaultValue), passthrough$1());
@@ -20975,6 +21252,35 @@ function withConstructorDefault$1(ast, defaultValue) {
 */
 function decodeTo$1(from, to, transformation) {
 	return appendTransformation(from, transformation, to);
+}
+function parseParameter(ast) {
+	const literals = [];
+	const parameters = [];
+	function go(ast) {
+		switch (ast._tag) {
+			case "Literal":
+				if (isPropertyKey(ast.literal)) literals.push(ast.literal);
+				return;
+			case "UniqueSymbol":
+				literals.push(ast.symbol);
+				return;
+			case "Never": return;
+			case "Union":
+				for (let i = 0; i < ast.types.length; i++) go(ast.types[i]);
+				return;
+			default: parameters.push(ast);
+		}
+	}
+	go(ast);
+	return {
+		literals,
+		parameters
+	};
+}
+/** @internal */
+function record$1(key, value) {
+	const { literals, parameters: indexSignatures } = parseParameter(key);
+	return new Objects(literals.map((literal) => new PropertySignature(literal, value)), indexSignatures.map((parameter) => new IndexSignature(parameter, value)));
 }
 /**
 * Returns `true` if the AST node represents an optional property.
@@ -21871,7 +22177,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 						evaluate: () => nodeStream,
 						onError: (error) => toPlatformError(`fromWritable(fd${fd})`, toError(error), command)
 					});
-					if (config.stream) yield* forkScoped(run$4(config.stream, sink));
+					if (config.stream) yield* forkScoped(run$5(config.stream, sink));
 					inputSinks.set(fd, sink);
 					break;
 				}
@@ -21905,7 +22211,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 			endOnDone: config.endOnDone,
 			encoding: config.encoding
 		});
-		if (isStream(config.stream)) return as(forkScoped(run$4(config.stream, sink)), sink);
+		if (isStream(config.stream)) return as(forkScoped(run$5(config.stream, sink)), sink);
 		return succeed$2(sink);
 	});
 	const setupChildOutputStreams = (command, childProcess, stdoutConfig, stderrConfig) => {
@@ -22501,11 +22807,11 @@ const makeFile = /*#__PURE__*/ (() => {
 			return nodeSync(this.fd);
 		}
 		seek(offset, from) {
-			const offsetSize = Size(offset);
+			const offsetSize = Size$1(offset);
 			return sync(() => {
 				if (from === "start") this.position = offsetSize;
 				else if (from === "current") this.position = this.position + offsetSize;
-				return Size(this.position);
+				return Size$1(this.position);
 			});
 		}
 		read(buffer) {
@@ -22515,7 +22821,7 @@ const makeFile = /*#__PURE__*/ (() => {
 					buffer,
 					position
 				}), (bytesRead) => {
-					const sizeRead = Size(bytesRead);
+					const sizeRead = Size$1(bytesRead);
 					this.position = position + sizeRead;
 					return sizeRead;
 				});
@@ -22551,7 +22857,7 @@ const makeFile = /*#__PURE__*/ (() => {
 			return suspend$2(() => {
 				const position = this.position;
 				return map$6(nodeWrite(this.fd, buffer, void 0, void 0, this.append ? void 0 : Number(position)), (bytesWritten) => {
-					const sizeWritten = Size(bytesWritten);
+					const sizeWritten = Size$1(bytesWritten);
 					if (!this.append) this.position = position + sizeWritten;
 					return sizeWritten;
 				});
@@ -22633,8 +22939,8 @@ const makeFileInfo = (stat) => ({
 	nlink: fromNullishOr(stat.nlink),
 	uid: fromNullishOr(stat.uid),
 	gid: fromNullishOr(stat.gid),
-	size: Size(stat.size),
-	blksize: stat.blksize !== void 0 ? some(Size(stat.blksize)) : none(),
+	size: Size$1(stat.size),
+	blksize: stat.blksize !== void 0 ? some(Size$1(stat.blksize)) : none(),
 	blocks: fromNullishOr(stat.blocks)
 });
 const stat = /*#__PURE__*/ (() => {
@@ -23067,7 +23373,7 @@ function is$1(schema) {
 }
 /** @internal */
 function _is(ast) {
-	const parser = asExit(run$3(toType(ast)));
+	const parser = asExit(run$4(toType(ast)));
 	return (input) => {
 		const exit = parser(input, defaultParseOptions);
 		if (isSuccess(exit)) return true;
@@ -23097,9 +23403,15 @@ function _is(ast) {
 * @since 4.0.0
 */
 function decodeUnknownEffect$1(schema, options) {
-	const parser = run$3(schema.ast);
+	const parser = run$4(schema.ast);
 	return options === void 0 ? parser : (input, overrideOptions) => parser(input, mergeParseOptions(options, overrideOptions));
 }
+/** @internal */
+function decodeUnknownOption(schema, options) {
+	return asOption(decodeUnknownEffect$1(schema, options));
+}
+/** @internal */
+const decodeOption$1 = decodeUnknownOption;
 /**
 * Creates an effectful encoder for `unknown` input.
 *
@@ -23122,7 +23434,7 @@ function decodeUnknownEffect$1(schema, options) {
 * @since 4.0.0
 */
 function encodeUnknownEffect$1(schema, options) {
-	const parser = run$3(flip(schema.ast));
+	const parser = run$4(flip(schema.ast));
 	return options === void 0 ? parser : (input, overrideOptions) => parser(input, mergeParseOptions(options, overrideOptions));
 }
 const mergeParseOptions = (options, overrideOptions) => overrideOptions ? {
@@ -23134,7 +23446,7 @@ const getValue = (value) => {
 	return succeed$2(value);
 };
 /** @internal */
-function run$3(ast) {
+function run$4(ast) {
 	return runWithCompiler(normalCompiler, ast);
 }
 function runWithCompiler(compiler, ast) {
@@ -23148,6 +23460,16 @@ function runWithCompiler(compiler, ast) {
 }
 function asExit(parser) {
 	return (input, options) => runSyncExit(parser(input, options));
+}
+/** @internal */
+function asOption(parser) {
+	const parserExit = asExit(parser);
+	return (input, options) => {
+		const exit = parserExit(input, options);
+		if (isSuccess(exit)) return some(exit.value);
+		getSchemaIssueOrThrow(exit.cause, "Option adapter can only return none for schema issues");
+		return none();
+	};
 }
 const normalCompiler = /*#__PURE__*/ memoize((ast) => makeParser$1(ast, normalCompiler));
 const constructorCompiler = /*#__PURE__*/ memoize((ast) => makeParser$1(ast, constructorCompiler, compileConstructorDefault));
@@ -23591,6 +23913,32 @@ function fromIssueExit(exit) {
 	return isSuccess(exit) ? exit : failCause$2(map$7(exit.cause, (issue) => new SchemaError(issue)));
 }
 /**
+* Decodes a typed input (the schema's `Encoded` type) against a schema,
+* returning an `Option` that is `Some` with the decoded value on success or
+* `None` for schema mismatches.
+*
+* **When to use**
+*
+* Use when you already have input typed as the schema's `Encoded` type and
+* only need to know whether decoding succeeded.
+*
+* **Details**
+*
+* For `unknown` input use {@link decodeUnknownOption}.
+* Options may be provided either when creating the decoder or when applying it;
+* application options override creation options.
+*
+* **Gotchas**
+*
+* Only causes made entirely of schema issues are converted to `None`. Causes
+* that contain defects, interruptions, or other non-schema reasons throw
+* instead.
+*
+* @category decoding
+* @since 3.10.0
+*/
+const decodeOption = decodeOption$1;
+/**
 * Encodes an `unknown` input against a schema, returning an `Effect` that
 * succeeds with the encoded value or fails with a {@link SchemaError}.
 *
@@ -23728,9 +24076,9 @@ const optionalKey = /*#__PURE__*/ lambda((schema) => make$10(optionalKey$1(schem
 * @category combinators
 * @since 3.10.0
 */
-const optional$4 = /*#__PURE__*/ lambda((self) => {
+const optional$3 = /*#__PURE__*/ lambda((self) => {
 	const schema = UndefinedOr(self);
-	return make$10(optional$5(self.ast), { schema });
+	return make$10(optional$4(self.ast), { schema });
 });
 /**
 * Creates a schema for a single literal value (string, number, bigint, boolean, or null).
@@ -23869,6 +24217,49 @@ function makeStruct(ast, fields) {
 */
 function Struct(fields) {
 	return makeStruct(struct(fields, void 0), fields);
+}
+/**
+* Defines a record schema whose dynamic properties are selected by a key schema
+* and decoded with a value schema.
+*
+* **Details**
+*
+* For dynamic keys, the key schema selects matching own properties and the
+* value schema decodes or encodes only those selected properties. Checks on
+* string, number, symbol, and template literal key schemas narrow which
+* properties are selected.
+*
+* For transformed key schemas, property selection is based on encoded property
+* names before the selected key is decoded.
+*
+* **Gotchas**
+*
+* When decoded or encoded key transformations produce the same property key,
+* sequential parsing applies selected own properties in selection order, so
+* the later selected property overwrites the earlier value. With concurrency
+* greater than `1`, completion order determines which value is retained.
+*
+* **Example** (Defining a string-keyed record of numbers)
+*
+* ```ts import.meta.vitest
+* import { Schema } from "effect"
+*
+* const schema = Schema.Record(Schema.String, Schema.Number)
+*
+* // { readonly [x: string]: number }
+* type R = typeof schema.Type
+*
+* Schema.decodeUnknownSync(schema)({ a: 1, b: 2 }) // => { a: 1, b: 2 }
+* ```
+*
+* @category constructors
+* @since 3.10.0
+*/
+function Record(key, value) {
+	return make$10(record$1(key.ast, value.ast), {
+		key,
+		value
+	});
 }
 /**
 * @category constructors
@@ -26705,7 +27096,7 @@ const isCliError = (u) => hasProperty(u, TypeId$13);
 */
 var UnrecognizedOption = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/UnrecognizedOption`)("UnrecognizedOption", {
 	option: String$1,
-	command: /*#__PURE__*/ optional$4(/*#__PURE__*/ ArraySchema(String$1)),
+	command: /*#__PURE__*/ optional$3(/*#__PURE__*/ ArraySchema(String$1)),
 	suggestions: /*#__PURE__*/ ArraySchema(String$1)
 })) {
 	/**
@@ -26993,7 +27384,7 @@ var InvalidValue = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/Invali
 */
 var UnknownSubcommand = class extends (/*#__PURE__*/ TaggedError(`${TypeId$13}/UnknownSubcommand`)("UnknownSubcommand", {
 	subcommand: String$1,
-	parent: /*#__PURE__*/ optional$4(/*#__PURE__*/ ArraySchema(String$1)),
+	parent: /*#__PURE__*/ optional$3(/*#__PURE__*/ ArraySchema(String$1)),
 	suggestions: /*#__PURE__*/ ArraySchema(String$1)
 })) {
 	/**
@@ -27869,7 +28260,7 @@ const password = (options) => basePrompt(options, "password").pipe(map$2(make$11
 * @category running
 * @since 4.0.0
 */
-const run$2 = /*#__PURE__*/ fnUntraced(function* (self) {
+const run$3 = /*#__PURE__*/ fnUntraced(function* (self) {
 	const terminal = yield* Terminal;
 	const input = yield* terminal.readInput;
 	return yield* runWithInput(self, terminal, input);
@@ -27939,7 +28330,7 @@ const text = (options) => basePrompt(options, "text");
 * @category constructors
 * @since 4.0.0
 */
-const toggle = (options) => {
+const toggle$1 = (options) => {
 	const opts = {
 		initial: false,
 		active: "on",
@@ -27956,7 +28347,7 @@ const proto = {
 	.../*#__PURE__*/ Prototype({
 		label: "Prompt",
 		evaluate() {
-			return run$2(this);
+			return run$3(this);
 		}
 	}),
 	[TypeId$12]: { _Output: (_) => _ }
@@ -29328,7 +29719,7 @@ const choice$1 = (kind, name, choices) => {
 * @category constructors
 * @since 4.0.0
 */
-const keyValuePair$1 = (kind, name) => map$1(variadic(makeSingle({
+const keyValuePair$1 = (kind, name) => map$1(variadic$1(makeSingle({
 	name,
 	primitiveType: keyValuePair$2,
 	kind
@@ -29520,7 +29911,7 @@ const mapEffect = /*#__PURE__*/ dual(2, (self, f) => transform$1(self, (parse) =
 * @category combinators
 * @since 4.0.0
 */
-const optional$3 = (param) => {
+const optional$2 = (param) => {
 	const parse = fnUntraced(function* (args) {
 		getUnderlyingSingleOrThrow(param);
 		return yield* param.parse(args).pipe(map$6(([leftover, value]) => [leftover, some(value)]), catchTags({
@@ -29566,8 +29957,8 @@ const optional$3 = (param) => {
 * @since 4.0.0
 */
 const withDefault$1 = /*#__PURE__*/ dual(2, (self, defaultValue) => {
-	if (!isEffect(defaultValue)) return map$1(optional$3(self), getOrElse(() => defaultValue));
-	return mapEffect(optional$3(self), match$5({
+	if (!isEffect(defaultValue)) return map$1(optional$2(self), getOrElse(() => defaultValue));
+	return mapEffect(optional$2(self), match$5({
 		onNone: () => defaultValue,
 		onSome: succeed$2
 	}));
@@ -29643,7 +30034,7 @@ const withFallbackConfig$1 = /*#__PURE__*/ dual(2, (self, config) => {
 * @category combinators
 * @since 4.0.0
 */
-const variadic = (self, options) => {
+const variadic$1 = (self, options) => {
 	const single = getUnderlyingSingleOrThrow(self);
 	const parse = (args) => {
 		if (single.kind === "argument") return parsePositionalVariadic(self, single, args, options);
@@ -29687,7 +30078,7 @@ const variadic = (self, options) => {
 */
 const atLeast$1 = /*#__PURE__*/ dual(2, (self, min) => {
 	if (min < 0) throw new Error("atLeast: min must be non-negative");
-	return variadic(self, { min });
+	return variadic$1(self, { min });
 });
 /**
 * Sets a custom metavar (placeholder name) for the param in help documentation.
@@ -29814,8 +30205,8 @@ const transformSingle = (param, f) => {
 		Single: (single) => f(single),
 		Map: (mapped) => map$1(transformSingle(mapped.param, f), mapped.f),
 		Transform: (mapped) => transform$1(transformSingle(mapped.param, f), mapped.f, mapped.alternatives.map((alternative) => () => transformSingle(alternative(), f))),
-		Optional: (p) => optional$3(transformSingle(p.param, f)),
-		Variadic: (p) => variadic(transformSingle(p.param, f), {
+		Optional: (p) => optional$2(transformSingle(p.param, f)),
+		Variadic: (p) => variadic$1(transformSingle(p.param, f), {
 			min: getOrUndefined$1(p.min),
 			max: getOrUndefined$1(p.max)
 		})
@@ -30137,7 +30528,7 @@ const withMetavar = /*#__PURE__*/ dual(2, (self, metavar) => withMetavar$1(self,
 * @category optionality
 * @since 4.0.0
 */
-const optional$2 = (param) => optional$3(param);
+const optional$1 = (param) => optional$2(param);
 /**
 * Provides a default value for a flag when it's not specified.
 *
@@ -30827,7 +31218,7 @@ const Completions = /*#__PURE__*/ action({
 		"zsh",
 		"fish",
 		"sh"
-	]).pipe(optional$2, /*#__PURE__*/ map((v) => map$11(v, (s) => s === "sh" ? "bash" : s)), /*#__PURE__*/ withMetavar("<bash|zsh|fish|sh>"), /*#__PURE__*/ withDescription$2("Print shell completion script")),
+	]).pipe(optional$1, /*#__PURE__*/ map((v) => map$11(v, (s) => s === "sh" ? "bash" : s)), /*#__PURE__*/ withMetavar("<bash|zsh|fish|sh>"), /*#__PURE__*/ withDescription$2("Print shell completion script")),
 	run: /*#__PURE__*/ fnUntraced(function* (shell, { command }) {
 		if (isNone(shell)) return;
 		const descriptor = fromCommand(command);
@@ -30855,7 +31246,7 @@ const LogLevel = /*#__PURE__*/ setting("log-level")({ flag: /*#__PURE__*/ choice
 	["error", "Error"],
 	["fatal", "Fatal"],
 	["none", "None"]
-]).pipe(optional$2, /*#__PURE__*/ withDescription$2("Sets the minimum log level"), /*#__PURE__*/ withMetavar("<all|trace|debug|info|warn|warning|error|fatal|none>")) });
+]).pipe(optional$1, /*#__PURE__*/ withDescription$2("Sets the minimum log level"), /*#__PURE__*/ withMetavar("<all|trace|debug|info|warn|warning|error|fatal|none>")) });
 /**
 * Built-in global flags in default precedence order.
 *
@@ -31534,7 +31925,7 @@ const scanCommandLevel = (tokens, context) => {
 };
 //#endregion
 //#region node_modules/effect/dist/unstable/cli/internal/wizard.js
-const run$1 = /*#__PURE__*/ fnUntraced(function* (command, options) {
+const run$2 = /*#__PURE__*/ fnUntraced(function* (command, options) {
 	const commandPath = options?.commandPath ?? [command.name];
 	const selected = getCommandAtPath(command, commandPath);
 	const commandLine = (options?.prefix ?? commandPath).map((value) => commandLineArg(value));
@@ -31569,7 +31960,7 @@ const promptCommand = /*#__PURE__*/ fnUntraced(function* (command, commandLine, 
 		if (visibleSubcommands.length > 0) yield* logCurrentCommand(commandLine);
 	}
 	if (visibleSubcommands.length === 0) return;
-	const child = yield* run$2(select({
+	const child = yield* run$3(select({
 		message: "Command",
 		choices: visibleSubcommands.map((command) => ({
 			title: command.name,
@@ -31589,7 +31980,7 @@ const promptParam = /*#__PURE__*/ fnUntraced(function* (param) {
 	const single = getUnderlyingSingleOrThrow(param);
 	const metadata = getParamMetadata(param);
 	if (metadata.isOptional) {
-		if (!(yield* run$2(confirm({
+		if (!(yield* run$3(confirm({
 			message: `Set ${renderParamLabel(single)}?`,
 			initial: false
 		})))) {
@@ -31597,7 +31988,7 @@ const promptParam = /*#__PURE__*/ fnUntraced(function* (param) {
 			return [];
 		}
 	}
-	const count = !metadata.isVariadic ? 1 : yield* run$2(integer$3({
+	const count = !metadata.isVariadic ? 1 : yield* run$3(integer$3({
 		message: `${renderParamLabel(single)} count`,
 		default: getOrElse(metadata.variadicMin, () => 0),
 		min: getOrElse(metadata.variadicMin, () => 0),
@@ -31620,7 +32011,7 @@ const promptParam = /*#__PURE__*/ fnUntraced(function* (param) {
 const promptSingle = (single) => {
 	const message = renderParamMessage(single);
 	switch (single.primitiveType._tag) {
-		case "Boolean": return map$6(run$2(confirm({
+		case "Boolean": return map$6(run$3(confirm({
 			message,
 			label: {
 				confirm: "true",
@@ -31633,7 +32024,7 @@ const promptSingle = (single) => {
 		})), (value) => commandLineArg(String(value)));
 		case "Choice": {
 			const choices = getChoiceKeys(single.primitiveType) ?? [];
-			return map$6(run$2(select({
+			return map$6(run$3(select({
 				message,
 				choices: choices.map((choice) => ({
 					title: choice,
@@ -31641,11 +32032,11 @@ const promptSingle = (single) => {
 				}))
 			})), commandLineArg);
 		}
-		case "Date": return map$6(run$2(date$1({ message })), (date) => commandLineArg(date.toISOString()));
-		case "Float": return map$6(run$2(float$2({ message })), (value) => commandLineArg(String(value)));
-		case "Integer": return map$6(run$2(integer$3({ message })), (value) => commandLineArg(String(value)));
-		case "Redacted": return map$6(run$2(password({ message })), (value) => commandLineArg(value$2(value), "<redacted>"));
-		default: return map$6(run$2(text({ message })), commandLineArg);
+		case "Date": return map$6(run$3(date$1({ message })), (date) => commandLineArg(date.toISOString()));
+		case "Float": return map$6(run$3(float$2({ message })), (value) => commandLineArg(String(value)));
+		case "Integer": return map$6(run$3(integer$3({ message })), (value) => commandLineArg(String(value)));
+		case "Redacted": return map$6(run$3(password({ message })), (value) => commandLineArg(value$2(value), "<redacted>"));
+		default: return map$6(run$3(text({ message })), commandLineArg);
 	}
 };
 const commandLineArg = (value, displayValue = value) => ({
@@ -31980,7 +32371,7 @@ const showUserError = (error) => gen(function* () {
 * @category running
 * @since 4.0.0
 */
-const run = /*#__PURE__*/ dual(2, (command, config) => Stdio.use(({ args }) => flatMap$1(args, (args) => runWith(command, config)(args))));
+const run$1 = /*#__PURE__*/ dual(2, (command, config) => Stdio.use(({ args }) => flatMap$1(args, (args) => runWith(command, config)(args))));
 /**
 * Runs a command with explicitly provided arguments instead of using arguments from `Stdio`.
 *
@@ -32090,12 +32481,12 @@ const runWith = (command, config) => {
 			if (flag === Wizard) return yield* gen(function* () {
 				yield* log(renderIntroduction(command.name, config.version, command.description));
 				const prefix = [command.name, ...args.filter((arg) => arg !== "--wizard" && !arg.startsWith("--wizard="))];
-				const wizardResult = yield* run$1(command, {
+				const wizardResult = yield* run$2(command, {
 					commandPath,
 					prefix
 				});
 				yield* log(renderCompletion(wizardResult.displayArgs));
-				if (yield* run$2(toggle({
+				if (yield* run$3(toggle$1({
 					message: "Run this command?",
 					initial: true,
 					active: "yes",
@@ -32130,7 +32521,7 @@ const runWith = (command, config) => {
 		}
 		const services = match$5(logLevel, {
 			onNone: () => empty$7(),
-			onSome: (level) => make$32(MinimumLogLevel, level)
+			onSome: (level) => make$33(MinimumLogLevel, level)
 		});
 		yield* provideContext(program, services);
 	}, catchFilter((error) => isCliError(error) && error._tag === "ShowHelp" ? succeed$6(error) : fail$6(error), (error) => andThen(showHelp(command, error, config.renderErrors !== false), fail$2(error))), catchFilter((error) => config.renderErrors !== false && isCliError(error) && error._tag === "UserError" ? succeed$6(error) : fail$6(error), (error) => andThen(showUserError(error), fail$2(error))), catchFilter((e) => isQuitError(e) ? succeed$6(e) : fail$6(e), (_) => interrupt$1));
@@ -32604,7 +32995,7 @@ const fromInputNested = (input) => {
 * @category instances
 * @since 4.0.0
 */
-const Equivalence = /*#__PURE__*/ make$34((a, b) => arrayEquivalence(a.params, b.params));
+const Equivalence = /*#__PURE__*/ make$35((a, b) => arrayEquivalence(a.params, b.params));
 const arrayEquivalence = /*#__PURE__*/ makeEquivalence(/*#__PURE__*/ makeEquivalence$2([/*#__PURE__*/ strictEqual(), /*#__PURE__*/ strictEqual()]));
 /**
 * An empty `UrlParams` value.
@@ -33612,7 +34003,7 @@ const layer$3 = /*#__PURE__*/ layerMergedContext(/*#__PURE__*/ succeed$2(/* @__P
 })));
 //#endregion
 //#region src/browser.ts
-/** Acquires a Chromium page: a launched local browser, a CDP endpoint, or agent-browser's session. */
+/** Chromium pages from a launched local browser or an attached one (Chrome, agent-browser, Playwriter, CDP). */
 const Source = taggedEnum();
 var BrowserError = class extends TaggedError()("Browser.BrowserError", { message: String$1 }) {};
 var Service$2 = class extends Service$3()("paper-snap/browser/Service") {};
@@ -33751,13 +34142,18 @@ const layer$2 = effect(Service$2, gen(function* () {
 			onSome: (storageState) => ({ storageState })
 		})
 	});
-	const openLaunched = fn("Browser.openLaunched")(function* (source, settings) {
-		const { browser, origin } = yield* acquireRelease(launch(source, settings.connectTimeout), ({ browser }) => close(browser));
-		const context = yield* attempt("Creating browser context", () => browser.newContext(contextOptions(settings)));
+	const launchedHandle = fn("Browser.launchedHandle")(function* (source, connectTimeout) {
+		const { browser, origin } = yield* acquireRelease(launch(source, connectTimeout), ({ browser }) => close(browser));
 		return {
-			page: yield* attempt("Opening tab", () => context.newPage()),
-			context,
-			origin
+			origin,
+			page: fn("Browser.launchedPage")(function* (settings) {
+				const context = yield* acquireRelease(attempt("Creating browser context", () => browser.newContext(contextOptions(settings))), (context) => promise(() => context.close()).pipe(ignore));
+				return {
+					page: yield* attempt("Opening tab", () => context.newPage()),
+					context,
+					existingTab: false
+				};
+			})
 		};
 	});
 	/** The tab the user or agent is looking at: a URL/title match, else the visible tab, else the last. */
@@ -33774,18 +34170,34 @@ const layer$2 = effect(Service$2, gen(function* () {
 		for (const page of content) if (yield* attempt("Probing tab", () => page.evaluate(() => document.visibilityState === "visible")).pipe(timeout("2 seconds"), orElseSucceed(() => false))) return page;
 		return content.at(-1) ?? pages.at(-1);
 	});
-	const openAttached = fn("Browser.openAttached")(function* (endpoint, origin, settings, freshTab) {
-		const context = (yield* attempt(`Connecting to ${endpoint}`, () => chromium.connectOverCDP(endpoint, { timeout: toMillis(settings.connectTimeout) }))).contexts()[0];
-		if (context === void 0) return yield* new BrowserError({ message: `${endpoint} has no browser context` });
-		const page = freshTab ? yield* acquireRelease(attempt("Opening tab", () => context.newPage()), (tab) => promise(() => tab.close()).pipe(ignore)) : yield* pickTab(context.pages(), settings.tab);
-		if (page === void 0) return yield* new BrowserError({ message: `${endpoint} has no open tab` });
+	/** Applies emulation to an attached tab; an existing tab gets it removed again on release. */
+	const emulate = fn("Browser.emulate")(function* (page, settings, existingTab) {
 		yield* forEach$1(toArray(settings.viewport), (viewport) => attempt("Resizing viewport", () => page.setViewportSize(viewport)));
 		yield* forEach$1(toArray(settings.colorScheme), (colorScheme) => attempt("Emulating color scheme", () => page.emulateMedia({ colorScheme })));
 		if (Object.keys(settings.headers).length > 0) yield* attempt("Setting headers", () => page.setExtraHTTPHeaders(settings.headers));
+		if (isSome(settings.storageState)) yield* logWarning("--storage-state applies to launched browsers; attached browsers keep their own session");
+		if (existingTab && (isSome(settings.viewport) || isSome(settings.colorScheme))) yield* addFinalizer(() => attempt("Restoring tab", async () => {
+			await page.emulateMedia({ colorScheme: null });
+			const session = await page.context().newCDPSession(page);
+			await session.send("Emulation.clearDeviceMetricsOverride");
+			await session.detach();
+		}).pipe(ignore));
+	});
+	const attachedHandle = fn("Browser.attachedHandle")(function* (endpoint, origin, connectTimeout, defaultTab) {
+		const context = (yield* attempt(`Connecting to ${endpoint}`, () => chromium.connectOverCDP(endpoint, { timeout: toMillis(connectTimeout) }))).contexts()[0];
+		if (context === void 0) return yield* new BrowserError({ message: `${endpoint} has no browser context` });
 		return {
-			page,
-			context,
-			origin
+			origin,
+			page: fn("Browser.attachedPage")(function* (settings, freshTab, tab) {
+				const target = freshTab ? yield* acquireRelease(attempt("Opening tab", () => context.newPage()), (opened) => promise(() => opened.close()).pipe(ignore)) : yield* pickTab(context.pages(), orElse$2(tab, () => defaultTab));
+				if (target === void 0) return yield* new BrowserError({ message: `${endpoint} has no open tab` });
+				yield* emulate(target, settings, !freshTab);
+				return {
+					page: target,
+					context,
+					existingTab: !freshTab
+				};
+			})
 		};
 	});
 	/** Chrome publishes its debugging port and browser path in `<user data dir>/DevToolsActivePort`. */
@@ -33795,27 +34207,24 @@ const layer$2 = effect(Service$2, gen(function* () {
 		if (port === void 0 || browserPath === void 0 || !/^\d+$/.test(port) || !browserPath.startsWith("/")) return yield* new BrowserError({ message: `Unrecognised ${file}` });
 		return `ws://127.0.0.1:${port}${browserPath}`;
 	});
-	const open = fn("Browser.open")(function* (source, settings, freshTab) {
+	const connect = fn("Browser.connect")(function* (source, connectTimeout) {
 		return yield* Source.$match(source, {
-			Launch: (launchSource) => openLaunched(launchSource, settings),
-			Attach: ({ endpoint }) => openAttached(endpoint, endpoint, settings, freshTab),
-			Playwriter: ({ endpoint }) => openAttached(endpoint, "playwriter", settings, freshTab),
+			Launch: (launchSource) => launchedHandle(launchSource, connectTimeout),
+			Attach: ({ endpoint }) => attachedHandle(endpoint, endpoint, connectTimeout, none()),
+			Playwriter: ({ endpoint }) => attachedHandle(endpoint, "playwriter", connectTimeout, none()),
 			Chrome: ({ userDataDir }) => gen(function* () {
 				const endpoint = yield* chromeEndpoint(userDataDir);
 				yield* logInfo("Connecting to Chrome; click Allow if Chrome asks");
-				return yield* openAttached(endpoint, "chrome", settings, freshTab);
+				return yield* attachedHandle(endpoint, "chrome", connectTimeout, none());
 			}),
 			AgentBrowser: (agentSource) => gen(function* () {
-				const endpoint = yield* agentBrowserEndpoint(agentSource, settings.connectTimeout);
-				const tab = isSome(settings.tab) ? settings.tab : yield* agentBrowserUrl(agentSource, settings.connectTimeout).pipe(option$1);
-				return yield* openAttached(endpoint, "agent-browser", {
-					...settings,
-					tab
-				}, freshTab);
+				const endpoint = yield* agentBrowserEndpoint(agentSource, connectTimeout);
+				const current = yield* agentBrowserUrl(agentSource, connectTimeout).pipe(option$1);
+				return yield* attachedHandle(endpoint, "agent-browser", connectTimeout, current);
 			})
 		});
 	});
-	return Service$2.of({ open });
+	return Service$2.of({ connect });
 }));
 const ValueMatcherProto = {
 	["~effect/match/Match/Matcher"]: {
@@ -34073,22 +34482,6 @@ const orElse = orElse$1;
 */
 const string$1 = (name) => string$3(argumentKind, name);
 /**
-* Makes a positional argument optional.
-*
-* **Example** (Making an argument optional)
-*
-* ```ts import.meta.vitest
-* import { Argument } from "effect/unstable/cli"
-*
-* const optionalVersion = Argument.string("version").pipe(Argument.optional)
-* optionalVersion.kind // => "argument"
-* ```
-*
-* @category combinators
-* @since 4.0.0
-*/
-const optional$1 = (arg) => optional$3(arg);
-/**
 * Adds a description to a positional argument.
 *
 * **Example** (Adding an argument description)
@@ -34106,6 +34499,263 @@ const optional$1 = (arg) => optional$3(arg);
 * @since 4.0.0
 */
 const withDescription = /*#__PURE__*/ dual(2, (self, description) => withDescription$3(self, description));
+/**
+* Creates a variadic positional argument that accepts multiple values.
+*
+* **Example** (Accepting multiple values)
+*
+* ```ts import.meta.vitest
+* import { Argument } from "effect/unstable/cli"
+*
+* // Accept any number of files
+* const anyFiles = Argument.string("files").pipe(Argument.variadic)
+*
+* // Accept at least 1 file
+* const atLeastOneFile = Argument.string("files").pipe(
+*   Argument.variadic({ min: 1 })
+* )
+*
+* // Accept between 1 and 5 files
+* const limitedFiles = Argument.string("files").pipe(
+*   Argument.variadic({ min: 1, max: 5 })
+* )
+*
+* const kinds = [anyFiles.kind, atLeastOneFile.kind, limitedFiles.kind] // => ["argument", "argument", "argument"]
+* ```
+*
+* @category combinators
+* @since 4.0.0
+*/
+const variadic = /*#__PURE__*/ dual((args) => isParam(args[0]), (self, options) => variadic$1(self, options));
+//#endregion
+//#region src/prepare.ts
+/**
+* Page passes that make a capture import cleanly into Paper. Each one rewrites the live DOM just
+* before serialization and returns how to undo it, so attached browsers are left as they were.
+*/
+var PrepareError = class extends TaggedError()("Prepare.PrepareError", {
+	stage: String$1,
+	message: String$1
+}) {};
+const step$1 = (stage, run) => tryPromise({
+	try: run,
+	catch: (error) => new PrepareError({
+		stage,
+		message: error instanceof Error ? error.message.split("\n")[0] ?? error.message : String(error)
+	})
+});
+const decodeAt$1 = (stage, schema) => (value) => decodeUnknownEffect(schema)(value).pipe(mapError((error) => new PrepareError({
+	stage,
+	message: error.message
+})));
+/** Runs and clears every undo function the passes registered. */
+const restore = (page) => step$1("restore", () => page.evaluate(() => {
+	for (const undo of (window.__paperSnapRestore ?? []).reverse()) undo();
+	delete window.__paperSnapRestore;
+})).pipe(ignore);
+const Counts = Struct({
+	resolved: Finite,
+	unresolved: Finite
+});
+/**
+* External sprites (`<use href="/sprite.svg#id">`) serialize as empty SVGs because the serializer
+* only follows same-document references. Fetch each sprite with the page's cookies, then replace
+* every external `<use>` with the symbol's shapes, baking in the computed fill and stroke.
+*/
+const inlineSprites = fn("Prepare.inlineSprites")(function* (page, context, timeout) {
+	const urls = yield* step$1("sprites", () => page.evaluate(() => {
+		const found = /* @__PURE__ */ new Set();
+		for (const use of document.querySelectorAll("use")) {
+			const href = use.getAttribute("href") ?? use.getAttribute("xlink:href") ?? "";
+			if (href === "" || href.startsWith("#")) continue;
+			const url = new URL(href, document.baseURI);
+			url.hash = "";
+			found.add(url.href);
+		}
+		return [...found];
+	})).pipe(flatMap$1(decodeAt$1("sprites", ArraySchema(String$1))));
+	if (urls.length === 0) return {
+		resolved: 0,
+		unresolved: 0
+	};
+	const sprites = yield* forEach$1(urls, (url) => step$1("sprites", async () => {
+		const response = await context.request.get(url, { timeout: toMillis(timeout) });
+		return response.ok() ? [[url, await response.text()]] : [];
+	}).pipe(orElseSucceed(() => [])), { concurrency: 8 });
+	return yield* step$1("sprites", () => page.evaluate((entries) => {
+		const namespace = "http://www.w3.org/2000/svg";
+		const parser = new DOMParser();
+		const documents = new Map(entries.map(([url, text]) => [url, parser.parseFromString(text, "image/svg+xml")]));
+		const log = window.__paperSnapRestore ??= [];
+		let resolved = 0;
+		let unresolved = 0;
+		for (const use of document.querySelectorAll("use")) {
+			const href = use.getAttribute("href") ?? use.getAttribute("xlink:href") ?? "";
+			if (href === "" || href.startsWith("#")) continue;
+			const url = new URL(href, document.baseURI);
+			const id = decodeURIComponent(url.hash.slice(1));
+			url.hash = "";
+			const symbol = documents.get(url.href)?.getElementById(id);
+			const svg = use.ownerSVGElement;
+			if (symbol === null || symbol === void 0 || svg === null) {
+				unresolved++;
+				continue;
+			}
+			const group = document.createElementNS(namespace, "g");
+			for (const child of symbol.childNodes) group.append(document.importNode(child, true));
+			use.replaceWith(group);
+			log.push(() => group.replaceWith(use));
+			const viewBox = symbol.getAttribute("viewBox");
+			if (viewBox !== null && !svg.hasAttribute("viewBox")) {
+				svg.setAttribute("viewBox", viewBox);
+				log.push(() => svg.removeAttribute("viewBox"));
+			}
+			for (const graphic of group.querySelectorAll("*")) {
+				const style = getComputedStyle(graphic);
+				if (!graphic.hasAttribute("fill")) graphic.setAttribute("fill", style.fill);
+				if (!graphic.hasAttribute("stroke") && style.stroke !== "none") graphic.setAttribute("stroke", style.stroke);
+			}
+			resolved++;
+		}
+		return {
+			resolved,
+			unresolved
+		};
+	}, sprites.flat())).pipe(flatMap$1(decodeAt$1("sprites", Counts)));
+});
+/**
+* Paper lays a `colspan` cell out one column wide, and a single frozen row skews its column
+* math for the rest of the table. Tables holding one are flattened into flex rows and columns
+* with every cell at its rendered width, so they import exactly as rendered.
+*/
+const fixColspans = (page) => step$1("colspans", () => page.evaluate(() => {
+	const log = window.__paperSnapRestore ??= [];
+	const tables = /* @__PURE__ */ new Set();
+	for (const cell of document.querySelectorAll("td, th")) {
+		const table = cell.closest("table");
+		if (cell.colSpan > 1 && table !== null) tables.add(table);
+	}
+	for (const table of tables) {
+		const rows = [...table.rows];
+		const sections = [...table.querySelectorAll(":scope > thead, :scope > tbody, :scope > tfoot")];
+		const tableWidth = table.getBoundingClientRect().width;
+		const rowWidths = rows.map((row) => row.getBoundingClientRect().width);
+		const cellWidths = rows.map((row) => [...row.cells].map((cell) => cell.getBoundingClientRect().width));
+		const touched = [
+			table,
+			...sections,
+			...rows,
+			...rows.flatMap((row) => [...row.cells])
+		];
+		const before = touched.map((element) => element.getAttribute("style"));
+		log.push(() => touched.forEach((element, index) => {
+			const style = before[index];
+			if (style === null || style === void 0) element.removeAttribute("style");
+			else element.setAttribute("style", style);
+		}));
+		table.style.setProperty("display", "flex");
+		table.style.setProperty("flex-direction", "column");
+		table.style.setProperty("width", `${tableWidth}px`);
+		for (const section of sections) {
+			if (!(section instanceof HTMLElement)) continue;
+			section.style.setProperty("display", "flex");
+			section.style.setProperty("flex-direction", "column");
+		}
+		rows.forEach((row, rowIndex) => {
+			row.style.setProperty("display", "flex");
+			row.style.setProperty("width", `${rowWidths[rowIndex] ?? tableWidth}px`);
+			[...row.cells].forEach((cell, cellIndex) => {
+				cell.style.setProperty("display", "block");
+				cell.style.setProperty("flex", "none");
+				cell.style.setProperty("box-sizing", "border-box");
+				cell.style.setProperty("width", `${cellWidths[rowIndex]?.[cellIndex] ?? 0}px`);
+			});
+		});
+	}
+	return tables.size;
+})).pipe(flatMap$1(decodeAt$1("colspans", Finite)));
+const Overflow = Struct({
+	extra: Finite,
+	containers: Finite
+});
+/** How far the deepest internal scroll container overflows, and how many are clipped. */
+const measureOverflow = (page) => step$1("full-page", () => page.evaluate(() => {
+	let extra = 0;
+	let containers = 0;
+	for (const element of document.querySelectorAll("*")) {
+		if (element === document.documentElement || element === document.body) continue;
+		const overflowY = getComputedStyle(element).overflowY;
+		if (overflowY !== "auto" && overflowY !== "scroll" && overflowY !== "overlay") continue;
+		const hidden = element.scrollHeight - element.clientHeight;
+		if (hidden > 1 && element.clientHeight > 0) {
+			extra = Math.max(extra, hidden);
+			containers++;
+		}
+	}
+	return {
+		extra,
+		containers
+	};
+})).pipe(flatMap$1(decodeAt$1("full-page", Overflow)));
+const Size = Struct({
+	width: Finite,
+	height: Finite
+});
+/**
+* App shells (`h-screen` + an `overflow: auto` main) clip everything below the fold. Grow the
+* viewport until no internal scroll container overflows, so the capture holds the whole screen.
+* Returns the number of containers still clipped and how to restore the viewport.
+*/
+const growToFullPage = fn("Prepare.growToFullPage")(function* (page, options) {
+	const original = page.viewportSize();
+	const start = yield* step$1("full-page", () => page.evaluate(() => ({
+		width: window.innerWidth,
+		height: window.innerHeight
+	}))).pipe(flatMap$1(decodeAt$1("full-page", Size)));
+	let height = start.height;
+	let overflow = yield* measureOverflow(page);
+	for (let round = 0; options.enabled && overflow.extra > 0 && round < 8; round++) {
+		const next = Math.min(options.maxHeight, height + overflow.extra);
+		if (next <= height) break;
+		height = next;
+		yield* step$1("full-page", () => page.setViewportSize({
+			width: start.width,
+			height
+		}));
+		yield* sleep(options.settle);
+		overflow = yield* measureOverflow(page);
+	}
+	const grown = height !== start.height;
+	if (grown) yield* logInfo(`Grew the viewport to ${height}px to unclip scroll containers`);
+	const clearOverride = step$1("full-page", async () => {
+		const session = await page.context().newCDPSession(page);
+		await session.send("Emulation.clearDeviceMetricsOverride");
+		await session.detach();
+	}).pipe(ignore);
+	const reset = !grown ? void_ : original === null ? clearOverride : step$1("full-page", () => page.setViewportSize(original)).pipe(ignore);
+	return {
+		clipped: overflow.containers,
+		reset
+	};
+});
+const PageWarnings = Struct({
+	emptySvgs: Finite,
+	unresolvedImages: Finite,
+	colspans: Finite
+});
+/** Counts what will import badly inside the captured element. */
+const scan = (target) => step$1("warnings", () => target.evaluate((root) => {
+	const visible = (element) => {
+		const rect = element.getBoundingClientRect();
+		return rect.width > 0 && rect.height > 0 && element.checkVisibility();
+	};
+	const drawable = "path, circle, rect, ellipse, line, polyline, polygon, text, image, foreignObject, use[href^='#']";
+	return {
+		emptySvgs: [...root.querySelectorAll("svg")].filter((svg) => visible(svg) && svg.querySelector(drawable) === null).length,
+		unresolvedImages: [...root.querySelectorAll("img")].filter((image) => visible(image) && image.complete && image.naturalWidth === 0).length,
+		colspans: [...root.querySelectorAll("td, th")].filter((cell) => cell.colSpan > 1 && getComputedStyle(cell).display === "table-cell").length
+	};
+})).pipe(flatMap$1(decodeAt$1("warnings", PageWarnings)));
 //#endregion
 //#region src/capture.ts
 /** Loads and prepares a page, then serializes an element with Paper's snapshot serializer. */
@@ -34206,9 +34856,55 @@ const unpinImageHeights = (page) => step("unpin-images", () => page.evaluate(() 
 		delete image.dataset["paperSnapPinned"];
 	}
 })).pipe(ignore);
+/** Parses `name=value; domain=…; path=…; secure; httponly` into a Playwright cookie. */
+const parseCookie = (spec, pageUrl) => {
+	const [pair = "", ...attributes] = spec.split(";").map((part) => part.trim());
+	const separator = pair.indexOf("=");
+	const name = separator === -1 ? pair : pair.slice(0, separator);
+	const value = separator === -1 ? "" : pair.slice(separator + 1);
+	const options = new Map(attributes.map((attribute) => {
+		const [key = "", ...rest] = attribute.split("=");
+		return [key.trim().toLowerCase(), rest.join("=").trim()];
+	}));
+	const domain = options.get("domain");
+	const secure = options.has("secure");
+	const httpOnly = options.has("httponly");
+	return domain === void 0 ? {
+		name,
+		value,
+		url: pageUrl,
+		secure,
+		httpOnly
+	} : {
+		name,
+		value,
+		domain,
+		path: options.get("path") ?? "/",
+		secure,
+		httpOnly
+	};
+};
+const hasStorage = (state) => Object.keys(state.localStorage).length > 0 || Object.keys(state.sessionStorage).length > 0;
+/** Seeds storage before the page's own scripts run, so apps boot with it (theme, flags, auth). */
+const seedStorage = (page, state) => step("storage", () => page.addInitScript(([local, session]) => {
+	try {
+		for (const [key, value] of Object.entries(local)) localStorage.setItem(key, value);
+		for (const [key, value] of Object.entries(session)) sessionStorage.setItem(key, value);
+	} catch {}
+}, [state.localStorage, state.sessionStorage]));
 /** Navigates (when a URL is given), prepares the page, and serializes the selected element. */
 const capture = fn("Capture.capture")(function* (session, url, serializer, settings) {
 	const { page } = session;
+	const { state } = settings;
+	if (state.cookies.length > 0) {
+		const base = getOrElse(url, () => page.url());
+		yield* step("cookies", () => session.context.addCookies(state.cookies.map((cookie) => parseCookie(cookie, base))));
+	}
+	if (hasStorage(state)) yield* seedStorage(page, state);
+	if (isNone(url) && (hasStorage(state) || state.cookies.length > 0)) yield* step("reload", () => page.reload({
+		waitUntil: settings.waitUntil,
+		timeout: toMillis(settings.navigationTimeout)
+	}));
 	if (isSome(url)) {
 		yield* logInfo(`Loading ${url.value}`);
 		yield* step("navigate", () => page.goto(url.value, {
@@ -34223,6 +34919,10 @@ const capture = fn("Capture.capture")(function* (session, url, serializer, setti
 		yield* step("wait-for", () => page.waitForSelector(selector, { timeout: toMillis(settings.waitForTimeout) }));
 	}
 	yield* forEach$1(settings.scripts, (script) => step("eval", () => page.evaluate(script)), { discard: true });
+	for (const selector of state.clicks) {
+		yield* step("click", () => page.locator(selector).first().click({ timeout: toMillis(settings.waitForTimeout) }));
+		if (idle > 0) yield* step("network-idle", () => page.waitForLoadState("networkidle", { timeout: idle })).pipe(ignore);
+	}
 	if (settings.scroll.enabled) {
 		yield* autoScroll(page, settings.scroll);
 		if (idle > 0) yield* step("network-idle", () => page.waitForLoadState("networkidle", { timeout: idle })).pipe(ignore);
@@ -34236,20 +34936,43 @@ const capture = fn("Capture.capture")(function* (session, url, serializer, setti
 	}));
 	const stamp = `${yield* currentTimeMillis}`;
 	yield* step("select", () => target.evaluate((element, [name, value]) => element.setAttribute(name, value), [markAttribute, stamp]));
-	const rect = yield* step("measure", () => target.evaluate((element) => {
-		const bounds = element.getBoundingClientRect();
-		return {
-			width: Math.ceil(bounds.width),
-			height: Math.ceil(bounds.height)
+	const { rect, result, warnings } = yield* gen(function* () {
+		const sprites = settings.inlineSprites ? yield* inlineSprites(page, session.context, settings.imageTimeout) : {
+			resolved: 0,
+			unresolved: 0
 		};
-	})).pipe(flatMap$1(decodeAt("measure", Rect)));
-	yield* logInfo(`Capturing ${settings.selector} (${rect.width}×${rect.height})`);
-	if (settings.pinImageHeights) yield* pinImageHeights(page);
-	const expression = `(${serializer.source})('[${markAttribute}="${stamp}"]')`;
-	const result = yield* step("serialize", () => page.evaluate(expression)).pipe(timeout(settings.captureTimeout), mapError((error) => is(CaptureError)(error) ? error : new CaptureError({
-		stage: "serialize",
-		message: "Timed out"
-	})), flatMap$1(decodeAt("serialize", CaptureResult)), ensuring$2(settings.pinImageHeights ? unpinImageHeights(page) : void_));
+		if (settings.fixColspans) yield* fixColspans(page);
+		const fullPage = yield* growToFullPage(page, settings.fullPage);
+		yield* addFinalizer(() => fullPage.reset);
+		if (settings.pinImageHeights) yield* pinImageHeights(page);
+		const rect = yield* step("measure", () => target.evaluate((element) => {
+			const bounds = element.getBoundingClientRect();
+			return {
+				width: Math.ceil(bounds.width),
+				height: Math.ceil(bounds.height)
+			};
+		})).pipe(flatMap$1(decodeAt("measure", Rect)));
+		const scanned = yield* scan(target);
+		yield* logInfo(`Capturing ${settings.selector} (${rect.width}×${rect.height})`);
+		const expression = `(${serializer.source})('[${markAttribute}="${stamp}"]')`;
+		return {
+			rect,
+			result: yield* step("serialize", () => page.evaluate(expression)).pipe(timeout(settings.captureTimeout), mapError((error) => is(CaptureError)(error) ? error : new CaptureError({
+				stage: "serialize",
+				message: "Timed out"
+			})), flatMap$1(decodeAt("serialize", CaptureResult))),
+			warnings: {
+				emptySvgs: scanned.emptySvgs,
+				unresolvedSprites: sprites.unresolved,
+				clippedScrollContainers: fullPage.clipped,
+				unresolvedImages: scanned.unresolvedImages,
+				lostColspans: scanned.colspans
+			}
+		};
+	}).pipe(ensuring$2(all([unpinImageHeights(page), restore(page)])), scoped, mapError((error) => is(PrepareError)(error) ? new CaptureError({
+		stage: error.stage,
+		message: error.message
+	}) : error));
 	if (result.status === "aborted") return yield* new CaptureError({
 		stage: "serialize",
 		message: "Aborted"
@@ -34266,6 +34989,7 @@ const capture = fn("Capture.capture")(function* (session, url, serializer, setti
 	const title = yield* step("title", () => page.title());
 	return {
 		html: images.html,
+		warnings,
 		width: rect.width,
 		height: rect.height,
 		title: title === "" ? URL.parse(pageUrl)?.host ?? pageUrl : title,
@@ -34753,7 +35477,7 @@ const paperSnapshotId = "lidfahaahiogmnlccifabccgplofocck";
 const serializerMarkers = ["x-paper-style-reference", "paper-snapshot-original-tag"];
 var ExtensionError = class extends TaggedError()("Extension.ExtensionError", { message: String$1 }) {};
 var Service$1 = class extends Service$3()("paper-snap/extension/Service") {};
-const decodeManifest = decodeUnknownEffect(fromJsonString(Struct({ version: String$1 })));
+const decodeManifest$1 = decodeUnknownEffect(fromJsonString(Struct({ version: String$1 })));
 const textDecoder = new TextDecoder();
 /** CRX3: "Cr24", format version, header length, header, then a plain zip archive. */
 const zipPayload = (bytes) => {
@@ -34798,7 +35522,7 @@ const layer$1 = effect(Service$1, gen(function* () {
 		});
 		const manifest = files["manifest.json"];
 		if (manifest === void 0) return yield* fail("The extension archive has no manifest.json");
-		const { version } = yield* decodeManifest(textDecoder.decode(manifest)).pipe(mapError(() => fail("The extension manifest has no version")));
+		const { version } = yield* decodeManifest$1(textDecoder.decode(manifest)).pipe(mapError(() => fail("The extension manifest has no version")));
 		return {
 			version,
 			scripts: Object.entries(files).flatMap(([name, content]) => name.endsWith(".js") ? [{
@@ -34809,7 +35533,7 @@ const layer$1 = effect(Service$1, gen(function* () {
 	});
 	const readDirectory = fn("Extension.readDirectory")(function* (directory) {
 		const manifest = yield* fs.readFileString(path.join(directory, "manifest.json")).pipe(mapError(() => fail(`${directory} has no manifest.json`)));
-		const { version } = yield* decodeManifest(manifest).pipe(mapError(() => fail("The extension manifest has no version")));
+		const { version } = yield* decodeManifest$1(manifest).pipe(mapError(() => fail("The extension manifest has no version")));
 		const names = yield* fs.readDirectory(directory, { recursive: true }).pipe(mapError((error) => fail(`Could not read ${directory}: ${error.message}`)));
 		return {
 			version,
@@ -34866,6 +35590,140 @@ const layer$1 = effect(Service$1, gen(function* () {
 	});
 	return Service$1.of({ serializer });
 }));
+//#endregion
+//#region src/job.ts
+/**
+* A job is one capture → one artboard. Flags describe a default job; positional URLs or a
+* manifest produce the actual list, each entry overriding any default field it sets.
+*/
+const Dictionary = Record(String$1, String$1);
+const ColorScheme = Literals([
+	"light",
+	"dark",
+	"no-preference"
+]);
+/** Every per-capture field a manifest entry may set; names mirror the CLI flags in camelCase. */
+const Entry = Struct({
+	url: optionalKey(String$1),
+	name: optionalKey(String$1),
+	selector: optionalKey(String$1),
+	tab: optionalKey(String$1),
+	width: optionalKey(Finite),
+	height: optionalKey(Finite),
+	scale: optionalKey(Finite),
+	colorScheme: optionalKey(ColorScheme),
+	userAgent: optionalKey(String$1),
+	locale: optionalKey(String$1),
+	timezone: optionalKey(String$1),
+	headers: optionalKey(Dictionary),
+	storageState: optionalKey(String$1),
+	localStorage: optionalKey(Dictionary),
+	sessionStorage: optionalKey(Dictionary),
+	cookies: optionalKey(ArraySchema(String$1)),
+	clicks: optionalKey(ArraySchema(String$1)),
+	eval: optionalKey(ArraySchema(String$1)),
+	waitFor: optionalKey(String$1),
+	settle: optionalKey(Finite),
+	fullPage: optionalKey(Boolean$2),
+	fileId: optionalKey(String$1),
+	pageId: optionalKey(String$1),
+	x: optionalKey(Finite),
+	y: optionalKey(Finite),
+	below: optionalKey(String$1),
+	rightOf: optionalKey(String$1),
+	replace: optionalKey(String$1)
+});
+const EntryList = ArraySchema(Union([String$1, Entry]));
+const isEntryList = is(EntryList);
+/** A bare URL string, an entry, a list of either, or `{ defaults, items }`. */
+const Manifest = Union([EntryList, Struct({
+	defaults: optionalKey(Entry),
+	items: ArraySchema(Union([String$1, Entry]))
+})]);
+var ManifestError = class extends TaggedError()("Job.ManifestError", { message: String$1 }) {};
+/** Whether the job pins its own placement, so batch layout leaves it alone. */
+const isPlaced = (job) => isSome(job.x) || isSome(job.y) || isSome(job.below) || isSome(job.rightOf) || isSome(job.replace);
+const override = (value, fallback) => value === void 0 ? fallback : some(value);
+/** Applies a manifest entry over a default job. */
+const apply = (base, entry) => ({
+	...base,
+	url: override(entry.url, base.url),
+	name: override(entry.name, base.name),
+	selector: entry.selector ?? base.selector,
+	tab: override(entry.tab, base.tab),
+	width: override(entry.width, base.width),
+	height: override(entry.height, base.height),
+	scale: entry.scale ?? base.scale,
+	colorScheme: override(entry.colorScheme, base.colorScheme),
+	userAgent: override(entry.userAgent, base.userAgent),
+	locale: override(entry.locale, base.locale),
+	timezone: override(entry.timezone, base.timezone),
+	headers: {
+		...base.headers,
+		...entry.headers
+	},
+	storageState: override(entry.storageState, base.storageState),
+	localStorage: {
+		...base.localStorage,
+		...entry.localStorage
+	},
+	sessionStorage: {
+		...base.sessionStorage,
+		...entry.sessionStorage
+	},
+	cookies: [...base.cookies, ...entry.cookies ?? []],
+	clicks: entry.clicks ?? base.clicks,
+	scripts: [...base.scripts, ...entry.eval ?? []],
+	waitFor: override(entry.waitFor, base.waitFor),
+	settle: entry.settle ?? base.settle,
+	fullPage: entry.fullPage ?? base.fullPage,
+	fileId: override(entry.fileId, base.fileId),
+	pageId: override(entry.pageId, base.pageId),
+	x: override(entry.x, base.x),
+	y: override(entry.y, base.y),
+	below: override(entry.below, base.below),
+	rightOf: override(entry.rightOf, base.rightOf),
+	replace: override(entry.replace, base.replace)
+});
+/** Paths like `/pricing` resolve against the base URL (or the first absolute URL in the run). */
+const resolveUrls = (jobs, baseUrl) => gen(function* () {
+	const base = orElse$2(baseUrl, () => fromNullishOr(jobs.flatMap((job) => toArray(job.url)).find((url) => URL.canParse(url))));
+	return yield* forEach$1(jobs, (job) => {
+		if (isNone(job.url) || URL.canParse(job.url.value)) return succeed$2(job);
+		const relative = job.url.value;
+		return match$5(base, {
+			onNone: () => fail$2(new ManifestError({ message: `"${relative}" is not a full URL; pass --base-url or start with an absolute URL` })),
+			onSome: (origin) => succeed$2({
+				...job,
+				url: some(new URL(relative, origin).href)
+			})
+		});
+	});
+});
+const decodeManifest = decodeUnknownEffect(fromJsonString(Manifest));
+/** Expands positional URLs or a manifest into jobs; with neither, the default job runs once. */
+const expand = fn("Job.expand")(function* (base, urls, manifest, baseUrl) {
+	const entries = isSome(manifest) ? yield* decodeManifest(manifest.value).pipe(mapError((error) => new ManifestError({ message: `Invalid manifest: ${error.message}` })), map$6((decoded) => isEntryList(decoded) ? decoded : decoded.items.map((item) => isString(item) ? {
+		...decoded.defaults,
+		url: item
+	} : {
+		...decoded.defaults,
+		...item
+	}))) : urls;
+	if (entries.length > 1 && isSome(base.replace)) return yield* new ManifestError({ message: "--replace takes a single capture; set replace per manifest item instead" });
+	const following = {
+		...base,
+		x: none(),
+		y: none(),
+		below: none(),
+		rightOf: none()
+	};
+	const jobs = entries.length === 0 ? [base] : entries.map((entry, index) => apply({
+		...index === 0 ? base : following,
+		index
+	}, isString(entry) ? { url: entry } : entry));
+	return yield* resolveUrls(jobs, baseUrl);
+});
 //#endregion
 //#region node_modules/zod/v4/core/util.js
 function getEnumValues(entries) {
@@ -51376,6 +52234,8 @@ var StdioClientTransport = class {
 //#endregion
 //#region src/paper.ts
 /** Writes snapshots into Paper through the MCP relay that ships with the Paper app. */
+const Position = taggedEnum();
+const Target = taggedEnum();
 var PaperError = class extends TaggedError()("Paper.PaperError", {
 	tool: String$1,
 	message: String$1
@@ -51387,15 +52247,31 @@ const TextBlock = Struct({
 });
 const ToolResult = Struct({
 	content: ArraySchema(Union([TextBlock, Struct({ type: String$1 })])),
-	isError: optional$4(Boolean$2)
+	isError: optional$3(Boolean$2)
 });
 /** Paper prefixes every tool result with a file header block. */
 const FileHeader = fromJsonString(Struct({ file: Struct({ id: String$1 }) }));
-const CreatedNode = fromJsonString(Struct({ id: String$1 }));
+/** Paper prefixes every tool result, errors included, with this header block. */
+const isFileHeader = (text) => isSome(decodeOption(FileHeader)(text));
+const CreatedNode = fromJsonString(Struct({
+	id: String$1,
+	worldX: Finite,
+	worldY: Finite
+}));
+const NodeInfo = fromJsonString(Struct({
+	id: String$1,
+	name: String$1,
+	width: NullOr(Finite),
+	height: NullOr(Finite),
+	worldX: NullOr(Finite),
+	worldY: NullOr(Finite),
+	parentId: NullOr(String$1),
+	childIds: ArraySchema(String$1)
+}));
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snap",
-		version: "0.2.0"
+		version: "0.3.0"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -51425,7 +52301,7 @@ const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(funct
 		const texts = result.content.flatMap((block) => is(TextBlock)(block) ? [block.text] : []);
 		if (result.isError === true) return yield* new PaperError({
 			tool,
-			message: texts.join("\n")
+			message: texts.filter((text) => !isFileHeader(text)).join("\n").trim()
 		});
 		return texts;
 	});
@@ -51437,66 +52313,162 @@ const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(funct
 		tool: "get_basic_info",
 		message: "No Paper file is open; open one or pass --file-id"
 	})))), map$6((header) => header.file.id));
-	return { place: fn("Paper.place")(function* (placement, html, keepOnFailure) {
-		const fileId = isSome(placement.fileId) ? placement.fileId.value : yield* activeFileId;
+	const fileOf = (fileId) => isSome(fileId) ? succeed$2(fileId.value) : activeFileId;
+	const nodeInfo = (fileId, nodeId) => call("get_node_info", {
+		fileId,
+		nodeId
+	}).pipe(flatMap$1((texts) => lastBlock("get_node_info", texts, NodeInfo)), mapError(() => new PaperError({
+		tool: "get_node_info",
+		message: `Artboard ${nodeId} not found in file ${fileId}; check the id, or pass --file-id for another file`
+	})));
+	/** Geometry and page of an artboard that a relative position refers to. */
+	const reference = fn("Paper.reference")(function* (fileId, artboardId) {
+		const node = yield* nodeInfo(fileId, artboardId);
+		const { worldX, worldY, width, height } = node;
+		if (worldX === null || worldY === null || width === null || height === null) return yield* new PaperError({
+			tool: "get_node_info",
+			message: `Artboard ${artboardId} has no measured geometry (is its page open in Paper?)`
+		});
+		return {
+			pageId: fromNullishOr(node.parentId?.match(/^root_node_(.+)$/)?.[1]),
+			x: worldX,
+			y: worldY,
+			width,
+			height
+		};
+	});
+	/** Resolves a position to a page and canvas coordinates. */
+	const anchor = (fileId, position) => Position.$match(position, {
+		Auto: () => succeed$2({
+			pageId: none(),
+			x: none(),
+			y: none()
+		}),
+		At: ({ x, y }) => succeed$2({
+			pageId: none(),
+			x,
+			y
+		}),
+		Below: ({ artboardId, gap }) => reference(fileId, artboardId).pipe(map$6((ref) => ({
+			pageId: ref.pageId,
+			x: some(ref.x),
+			y: some(ref.y + ref.height + gap)
+		}))),
+		RightOf: ({ artboardId, gap }) => reference(fileId, artboardId).pipe(map$6((ref) => ({
+			pageId: ref.pageId,
+			x: some(ref.x + ref.width + gap),
+			y: some(ref.y)
+		})))
+	});
+	const write = (fileId, artboardId, name, html) => logInfo(`Writing ${Math.round(html.length / 1024)} KB into "${name}"`).pipe(andThen(call("write_html", {
+		fileId,
+		targetNodeId: artboardId,
+		mode: "insert-children",
+		html
+	})));
+	const create = fn("Paper.create")(function* (target, size, html, keepOnFailure) {
+		const fileId = yield* fileOf(target.fileId);
+		const spot = yield* anchor(fileId, target.position);
+		const pageId = orElse$2(target.pageId, () => spot.pageId);
+		const height = Math.max(size.height, 1);
 		const created = yield* call("create_artboard", {
 			fileId,
-			name: placement.name,
-			...match$5(placement.pageId, {
+			name: target.name,
+			...match$5(pageId, {
 				onNone: () => ({}),
-				onSome: (pageId) => ({ pageId })
+				onSome: (page) => ({ pageId: page })
 			}),
 			styles: {
-				width: `${placement.width}px`,
-				height: `${Math.max(placement.height, 1)}px`
+				width: `${size.width}px`,
+				height: `${height}px`
 			}
-		});
-		const { id: artboardId } = yield* lastBlock("create_artboard", created, CreatedNode);
-		yield* logInfo(`Writing ${Math.round(html.length / 1024)} KB into "${placement.name}"`);
-		yield* call("write_html", {
+		}).pipe(flatMap$1((texts) => lastBlock("create_artboard", texts, CreatedNode)));
+		yield* write(fileId, created.id, target.name, html).pipe(tapError(() => keepOnFailure ? void_ : call("delete_nodes", {
 			fileId,
-			targetNodeId: artboardId,
-			mode: "insert-children",
-			html
-		}).pipe(tapError(() => keepOnFailure ? void_ : call("delete_nodes", {
-			fileId,
-			nodeIds: [artboardId]
+			nodeIds: [created.id]
 		}).pipe(ignore)));
-		if (isSome(placement.x) || isSome(placement.y)) {
-			const position = {
-				...match$5(placement.x, {
-					onNone: () => ({}),
-					onSome: (x) => ({ left: `${x}px` })
-				}),
-				...match$5(placement.y, {
-					onNone: () => ({}),
-					onSome: (y) => ({ top: `${y}px` })
-				})
-			};
-			yield* call("update_styles", {
-				fileId,
-				updates: [{
-					nodeIds: [artboardId],
-					styles: position
-				}]
-			});
-		}
-		yield* call("finish_working_on_nodes", { fileId }).pipe(ignore);
+		const x = getOrElse(spot.x, () => created.worldX);
+		const y = getOrElse(spot.y, () => created.worldY);
+		if (isSome(spot.x) || isSome(spot.y)) yield* call("update_styles", {
+			fileId,
+			updates: [{
+				nodeIds: [created.id],
+				styles: {
+					left: `${x}px`,
+					top: `${y}px`
+				}
+			}]
+		});
 		return {
 			fileId,
-			artboardId
+			artboardId: created.id,
+			name: target.name,
+			x,
+			y,
+			width: size.width,
+			height,
+			replaced: false
 		};
+	});
+	const replace = fn("Paper.replace")(function* (target, size, html) {
+		const fileId = yield* fileOf(target.fileId);
+		const existing = yield* nodeInfo(fileId, target.artboardId);
+		const name = getOrElse(target.name, () => existing.name);
+		const height = Math.max(size.height, 1);
+		if (existing.childIds.length > 0) yield* call("delete_nodes", {
+			fileId,
+			nodeIds: existing.childIds
+		});
+		yield* call("update_styles", {
+			fileId,
+			updates: [{
+				nodeIds: [existing.id],
+				styles: {
+					width: `${size.width}px`,
+					height: `${height}px`
+				}
+			}]
+		});
+		if (name !== existing.name) yield* call("rename_nodes", {
+			fileId,
+			updates: [{
+				nodeId: existing.id,
+				name
+			}]
+		});
+		yield* write(fileId, existing.id, name, html);
+		return {
+			fileId,
+			artboardId: existing.id,
+			name,
+			x: existing.worldX ?? 0,
+			y: existing.worldY ?? 0,
+			width: size.width,
+			height,
+			replaced: true
+		};
+	});
+	return { place: fn("Paper.place")(function* (target, size, html, keepOnFailure) {
+		const artboard = yield* Target.$match(target, {
+			Create: (create_) => create(create_, size, html, keepOnFailure),
+			Replace: (replace_) => replace(replace_, size, html)
+		});
+		yield* call("finish_working_on_nodes", { fileId: artboard.fileId }).pipe(ignore);
+		return artboard;
 	}) };
 }) }));
 //#endregion
 //#region src/cli.ts
 /** `paper-snap`: every behaviour is a flag; defaults suit a one-shot capture into the open Paper file. */
 const milliseconds = (name, fallback, description) => integer$1(name).pipe(withDescription$2(`${description} (ms)`), withDefault(fallback));
-const optionalString = (name, description) => string$2(name).pipe(withDescription$2(description), optional$2);
-const optionalInteger = (name, description) => integer$1(name).pipe(withDescription$2(description), optional$2);
+const optionalString = (name, description) => string$2(name).pipe(withDescription$2(description), optional$1);
+const optionalInteger = (name, description) => integer$1(name).pipe(withDescription$2(description), optional$1);
 const repeatable = (name, description) => string$2(name).pipe(withDescription$2(`${description} (repeatable)`), atLeast(0));
+const toggle = (name, fallback, description) => boolean$2(name).pipe(withDescription$2(description), withDefault(fallback));
 const flags = {
-	url: string$1("url").pipe(withDescription("Page to load. Omit it to capture the attached browser's current tab"), optional$1),
+	urls: string$1("url").pipe(withDescription("Pages to capture, one artboard each. Paths like /pricing resolve against the first URL or --base-url. Omit to capture the attached browser's current tab"), variadic()),
+	manifest: optionalString("manifest", "JSON file of captures: [url | {url, name, selector, width, height, colorScheme, localStorage, cookies, clicks, eval, fileId, pageId, x, y, below, rightOf, replace, …}] or {defaults, items}. Flags are the defaults"),
+	baseUrl: optionalString("base-url", "Origin that relative URLs resolve against"),
 	source: choice("source", [
 		"auto",
 		"launch",
@@ -51504,31 +52476,35 @@ const flags = {
 		"agent-browser",
 		"playwriter",
 		"cdp"
-	]).pipe(withDescription$2("Where the page lives. launch: a headless installed Chrome. chrome: your everyday Chrome (enable chrome://inspect/#remote-debugging). agent-browser / playwriter / cdp: attach to that browser. auto: launch when <url> is given, otherwise agent-browser, then chrome"), withDefault("auto")),
+	]).pipe(withDescription$2("Where pages live. launch: a headless installed Chrome. chrome: your everyday Chrome (enable chrome://inspect/#remote-debugging). agent-browser / playwriter / cdp: attach to that browser. auto: launch when a URL is given, otherwise agent-browser, then chrome"), withDefault("auto")),
 	cdp: optionalString("cdp", "CDP endpoint to attach to (http://host:port or ws://…); implies --source cdp"),
 	chromeUserDataDir: optionalString("chrome-user-data-dir", "Chrome user data directory for --source chrome (default: the platform's Google Chrome profile root)"),
 	playwriterEndpoint: string$2("playwriter-endpoint").pipe(withDescription$2("Playwriter relay CDP endpoint"), withDefault("http://127.0.0.1:19988")),
 	tab: optionalString("tab", "Attached browsers: capture the tab whose URL or title contains this text (default: the visible tab)"),
 	agentBrowserBin: string$2("agent-browser-bin").pipe(withDescription$2("agent-browser executable"), withDefault("agent-browser")),
 	agentBrowserSession: optionalString("agent-browser-session", "agent-browser session name"),
-	browser: string$2("browser").pipe(withDescription$2("Chromium-based executable to launch (default: installed Chrome/Edge/Brave/Chromium)"), withFallbackConfig(string$5("PAPER_SNAP_BROWSER")), optional$2),
+	browser: string$2("browser").pipe(withDescription$2("Chromium-based executable to launch (default: installed Chrome/Edge/Brave/Chromium)"), withFallbackConfig(string$5("PAPER_SNAP_BROWSER")), optional$1),
 	browserArgs: repeatable("browser-arg", "Extra command-line argument for the launched browser"),
-	headed: boolean$2("headed").pipe(withDescription$2("Show the launched browser"), withDefault(false)),
-	downloadBrowser: boolean$2("download-browser").pipe(withDescription$2("Download headless Chromium when no installed browser is found"), withDefault(true)),
+	headed: toggle("headed", false, "Show the launched browser"),
+	downloadBrowser: toggle("download-browser", true, "Download headless Chromium when no installed browser is found"),
 	connectTimeout: milliseconds("connect-timeout", 3e4, "Browser launch/attach timeout"),
-	width: optionalInteger("width", "Viewport width in px (default 1440; attached tabs keep theirs)"),
-	height: optionalInteger("height", "Viewport height in px (default 900; attached tabs keep theirs)"),
+	width: optionalInteger("width", "Viewport width in px (default 1440; attached tabs keep theirs). The capture is as wide as the selected element"),
+	height: optionalInteger("height", "Viewport height in px (default 900; attached tabs keep theirs). The capture always covers the selected element's full height; content inside internal scroll containers is unclipped by --full-page"),
 	scale: float("scale").pipe(withDescription$2("Device scale factor"), withDefault(1)),
 	colorScheme: choice("color-scheme", [
 		"light",
 		"dark",
 		"no-preference"
-	]).pipe(withDescription$2("Emulated prefers-color-scheme"), optional$2),
+	]).pipe(withDescription$2("Emulates the prefers-color-scheme media query only. Apps that keep their theme in storage need --local-storage <key>=dark as well"), optional$1),
 	userAgent: optionalString("user-agent", "User agent override"),
 	locale: optionalString("locale", "Locale, e.g. fr-FR"),
 	timezone: optionalString("timezone", "Time zone, e.g. Africa/Douala"),
 	headers: keyValuePair("header").pipe(withDescription$2("Extra request header as name=value (repeatable)"), withDefault({})),
-	storageState: optionalString("storage-state", "Playwright storage-state JSON with cookies/localStorage"),
+	storageState: optionalString("storage-state", "Playwright storage-state JSON with cookies/localStorage (launched browsers)"),
+	localStorage: keyValuePair("local-storage").pipe(withDescription$2("localStorage entry set before the page's scripts run, as key=value (repeatable)"), withDefault({})),
+	sessionStorage: keyValuePair("session-storage").pipe(withDescription$2("sessionStorage entry set before the page's scripts run, as key=value (repeatable)"), withDefault({})),
+	cookies: repeatable("cookie", "Cookie as \"name=value\", optionally \"; domain=…; path=…; secure; httponly\" (default: the page's URL)"),
+	clicks: repeatable("click", "Selector to click after load, in order"),
 	selector: string$2("selector").pipe(withAlias("s"), withDescription$2("CSS selector of the element to capture"), withDefault("body")),
 	waitUntil: choice("wait-until", [
 		"load",
@@ -51539,56 +52515,98 @@ const flags = {
 	navigationTimeout: milliseconds("navigation-timeout", 6e4, "Navigation timeout"),
 	networkIdleTimeout: milliseconds("network-idle-timeout", 15e3, "Max wait for network idle; 0 skips it"),
 	waitFor: optionalString("wait-for", "Selector that must appear before capturing"),
-	waitForTimeout: milliseconds("wait-for-timeout", 3e4, "Timeout for --wait-for and --selector"),
+	waitForTimeout: milliseconds("wait-for-timeout", 3e4, "Timeout for --wait-for, --click and --selector"),
 	evals: repeatable("eval", "JavaScript to run in the page before capturing"),
 	evalFiles: repeatable("eval-file", "File of JavaScript to run in the page before capturing"),
-	scroll: boolean$2("scroll").pipe(withDescription$2("Scroll through the page first so lazy content loads"), withDefault(true)),
+	scroll: toggle("scroll", true, "Scroll through the page first so lazy content loads"),
 	scrollStep: optionalInteger("scroll-step", "Scroll step in px (default 80% of the viewport)"),
 	scrollDelay: milliseconds("scroll-delay", 120, "Pause between scroll steps"),
 	scrollMax: integer$1("scroll-max").pipe(withDescription$2("Stop auto-scrolling after this many px"), withDefault(5e4)),
 	settle: milliseconds("settle", 500, "Pause before capturing"),
-	pinImageHeights: boolean$2("pin-image-heights").pipe(withDescription$2("Freeze rendered image heights so Paper keeps aspect ratios"), withDefault(true)),
+	fullPage: toggle("full-page", true, "Grow the viewport until no internal scroll container (h-screen shells, overflow:auto mains) clips content"),
+	fullPageMaxHeight: integer$1("full-page-max-height").pipe(withDescription$2("Cap for the grown viewport in px"), withDefault(3e4)),
+	inlineSprites: toggle("inline-sprites", true, "Inline external SVG sprites (<use href=/sprite.svg#id>) with their computed colors"),
+	fixColspans: toggle("fix-colspans", true, "Freeze table rows with colspan cells into full-width rows Paper can lay out"),
+	pinImageHeights: toggle("pin-image-heights", true, "Freeze rendered image heights so Paper keeps aspect ratios"),
 	inlineImages: choice("inline-images", [
 		"auto",
 		"always",
 		"never"
 	]).pipe(withDescription$2("Embed images as data URIs. auto: only for localhost/private hosts Paper can't reach"), withDefault("auto")),
-	imageTimeout: milliseconds("image-timeout", 15e3, "Per-image download timeout when inlining"),
+	imageTimeout: milliseconds("image-timeout", 15e3, "Per-asset download timeout for images and sprites"),
 	captureTimeout: milliseconds("capture-timeout", 12e4, "Serializer timeout"),
 	extension: optionalString("extension", "Paper Snapshot extension to use: .crx, .zip, unpacked directory, or .js"),
 	extensionId: string$2("extension-id").pipe(withDescription$2("Chrome Web Store id of Paper Snapshot"), withDefault(paperSnapshotId)),
-	refreshExtension: boolean$2("refresh-extension").pipe(withDescription$2("Re-download the extension instead of using the cached copy"), withDefault(false)),
+	refreshExtension: toggle("refresh-extension", false, "Re-download the extension instead of using the cached copy"),
 	cacheDir: optionalString("cache-dir", "Cache directory (default ~/.cache/paper-snap)"),
-	push: boolean$2("push").pipe(withDescription$2("Create an artboard in Paper (default unless --out or --clipboard is given)"), optional$2),
-	clipboard: boolean$2("clipboard").pipe(withDescription$2("Copy the snapshot for a manual ⌘V into Paper (macOS)"), withDefault(false)),
-	out: optionalString("out", "Write the snapshot HTML to a file, or \"-\" for stdout").pipe(withAlias("o")),
-	json: boolean$2("json").pipe(withDescription$2("Print a JSON result summary on stdout"), withDefault(false)),
+	push: boolean$2("push").pipe(withDescription$2("Create artboards in Paper (default unless --out or --clipboard is given)"), optional$1),
+	clipboard: toggle("clipboard", false, "Copy the snapshot for a manual ⌘V into Paper (macOS, single capture)"),
+	out: optionalString("out", "Write snapshot HTML to a file (\"-\" for stdout); with several captures, a directory").pipe(withAlias("o")),
+	json: toggle("json", false, "Print one JSON line per capture on stdout; failures print {\"index\", \"url\", \"error\"}"),
+	quiet: toggle("quiet", false, "Only log warnings and errors (same as --log-level warn)"),
+	failFast: toggle("fail-fast", false, "Stop at the first failed capture"),
 	fileId: optionalString("file-id", "Paper file id (default: the file open in Paper)"),
 	pageId: optionalString("page-id", "Paper page id (default: the active page)"),
 	name: optionalString("name", "Artboard name (default: page title · host)"),
 	x: optionalInteger("x", "Artboard x position on the canvas"),
 	y: optionalInteger("y", "Artboard y position on the canvas"),
+	below: optionalString("below", "Place the artboard below this artboard id (same page)"),
+	rightOf: optionalString("right-of", "Place the artboard right of this artboard id (same page)"),
+	replace: optionalString("replace", "Re-snapshot into this existing artboard id, keeping its id, position and name"),
+	gap: integer$1("gap").pipe(withDescription$2("Space between artboards for --below, --right-of and --layout (px)"), withDefault(80)),
+	layout: choice("layout", [
+		"row",
+		"column",
+		"grid"
+	]).pipe(withDescription$2("How several captures are arranged, starting from the first one's position"), withDefault("row")),
+	columns: integer$1("columns").pipe(withDescription$2("Columns for --layout grid"), withDefault(4)),
 	paperBin: optionalString("paper-bin", "Paper CLI that provides the MCP relay (default ~/.paper/bin/paper)"),
 	paperTimeout: milliseconds("paper-timeout", 3e5, "Timeout per Paper tool call"),
-	keepOnFailure: boolean$2("keep-on-failure").pipe(withDescription$2("Keep the artboard when writing into it fails"), withDefault(false))
+	keepOnFailure: toggle("keep-on-failure", false, "Keep the artboard when writing into it fails")
 };
-const encodeSummary = encodeEffect(fromJsonString(Struct({
+/** Captures in the run failed; each was already reported, so the run only summarizes. */
+var CapturesFailed = class extends TaggedError()("Cli.CapturesFailed", { message: String$1 }) {};
+var UsageError = class extends TaggedError()("Cli.UsageError", { message: String$1 }) {};
+const Warnings = Struct({
+	emptySvgs: Finite,
+	unresolvedSprites: Finite,
+	clippedScrollContainers: Finite,
+	unresolvedImages: Finite,
+	lostColspans: Finite
+});
+const Summary = Struct({
+	index: Finite,
 	url: String$1,
 	title: String$1,
+	name: NullOr(String$1),
 	width: Finite,
 	height: Finite,
 	bytes: Finite,
 	inlinedImages: Finite,
+	warnings: Warnings,
 	extensionVersion: String$1,
 	browser: String$1,
 	fileId: NullOr(String$1),
 	artboardId: NullOr(String$1),
+	x: NullOr(Finite),
+	y: NullOr(Finite),
+	replaced: Boolean$2,
 	out: NullOr(String$1),
 	clipboard: Boolean$2
-})));
+});
+const Failure = Struct({
+	index: NullOr(Finite),
+	url: NullOr(String$1),
+	error: Struct({
+		tag: String$1,
+		message: String$1
+	})
+});
+const encodeSummary = encodeEffect(fromJsonString(Summary));
+const encodeFailure = encodeEffect(fromJsonString(Failure));
 const chromeUserDataDir = (home, localAppData) => value(process.platform).pipe(when("darwin", () => `${home}/Library/Application Support/Google/Chrome`), when("win32", () => `${localAppData}\\Google\\Chrome\\User Data`), orElse(() => `${home}/.config/google-chrome`));
 /** Sources to try in order; auto without a URL attaches to whatever the user or agent is driving. */
-const resolveSources = (input, home, localAppData) => gen(function* () {
+const resolveSources = (input, hasUrl, home, localAppData) => gen(function* () {
 	const source = isSome(input.cdp) && input.source === "auto" ? "cdp" : input.source;
 	const launch = Source.Launch({
 		executablePath: input.browser,
@@ -51606,25 +52624,118 @@ const resolveSources = (input, home, localAppData) => gen(function* () {
 	if (source === "agent-browser") return [agentBrowser];
 	if (source === "playwriter") return [Source.Playwriter({ endpoint: input.playwriterEndpoint })];
 	if (source === "cdp") {
-		if (isNone(input.cdp)) return yield* new BrowserError({ message: "--source cdp needs --cdp <endpoint>" });
+		if (isNone(input.cdp)) return yield* new UsageError({ message: "--source cdp needs --cdp <endpoint>" });
 		return [Source.Attach({ endpoint: input.cdp.value })];
 	}
-	return isSome(input.url) ? [launch] : [agentBrowser, chrome];
+	return hasUrl ? [launch] : [agentBrowser, chrome];
 });
-/** Opens the first source that works; the error lists why each one failed. */
-const openFirst = (browser, sources, settings, freshTab) => {
+/** Connects to the first source that works; the error lists why each one failed. */
+const connectFirst = (browser, sources, timeout) => {
 	const [first, ...rest] = sources;
 	if (first === void 0) return fail$2(new BrowserError({ message: "No browser source" }));
-	const attempt = browser.open(first, settings, freshTab);
-	return rest.length === 0 ? attempt : attempt.pipe(catch_((error) => openFirst(browser, rest, settings, freshTab).pipe(mapError((next) => new BrowserError({ message: `${first._tag}: ${error.message}; ${next.message}` })))));
+	const attempt = browser.connect(first, timeout);
+	return rest.length === 0 ? attempt : attempt.pipe(catch_((error) => connectFirst(browser, rest, timeout).pipe(mapError((next) => new BrowserError({ message: `${first._tag}: ${error.message}; ${next.message}` })))));
 };
-const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
+/** The default job described by the flags. */
+const baseJob = (input, scripts) => ({
+	index: 0,
+	url: none(),
+	name: input.name,
+	selector: input.selector,
+	tab: input.tab,
+	width: input.width,
+	height: input.height,
+	scale: input.scale,
+	colorScheme: input.colorScheme,
+	userAgent: input.userAgent,
+	locale: input.locale,
+	timezone: input.timezone,
+	headers: input.headers,
+	storageState: input.storageState,
+	localStorage: input.localStorage,
+	sessionStorage: input.sessionStorage,
+	cookies: input.cookies,
+	clicks: input.clicks,
+	scripts,
+	waitFor: input.waitFor,
+	settle: input.settle,
+	fullPage: input.fullPage,
+	fileId: input.fileId,
+	pageId: input.pageId,
+	x: input.x,
+	y: input.y,
+	below: input.below,
+	rightOf: input.rightOf,
+	replace: input.replace
+});
+/** Batch layout: where an unplaced job goes, given the artboards placed so far in this run. */
+const nextPosition = (input, placed) => {
+	const previous = placed.at(-1);
+	if (previous === void 0) return none();
+	if (input.layout === "row") return some({
+		x: previous.x + previous.width + input.gap,
+		y: previous.y
+	});
+	if (input.layout === "column") return some({
+		x: previous.x,
+		y: previous.y + previous.height + input.gap
+	});
+	const columns = Math.max(1, input.columns);
+	if (placed.length % columns !== 0) return some({
+		x: previous.x + previous.width + input.gap,
+		y: previous.y
+	});
+	const row = placed.slice(-columns);
+	const first = row[0] ?? previous;
+	const bottom = Math.max(...row.map((artboard) => artboard.y + artboard.height));
+	return some({
+		x: first.x,
+		y: bottom + input.gap
+	});
+};
+const target = (job, input, name, layout) => {
+	if (isSome(job.replace)) return Target.Replace({
+		fileId: job.fileId,
+		artboardId: job.replace.value,
+		name: job.name
+	});
+	const position = isSome(job.below) ? Position.Below({
+		artboardId: job.below.value,
+		gap: input.gap
+	}) : isSome(job.rightOf) ? Position.RightOf({
+		artboardId: job.rightOf.value,
+		gap: input.gap
+	}) : isSome(job.x) || isSome(job.y) ? Position.At({
+		x: job.x,
+		y: job.y
+	}) : match$5(layout, {
+		onNone: () => Position.Auto(),
+		onSome: ({ x, y }) => Position.At({
+			x: some(x),
+			y: some(y)
+		})
+	});
+	return Target.Create({
+		fileId: job.fileId,
+		pageId: job.pageId,
+		name,
+		position
+	});
+};
+const slug = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "snapshot";
+const handler = fn("paper-snap")(function* (input) {
 	const fs = yield* FileSystem;
 	const path = yield* Path$1;
 	const home = yield* string$5("HOME").pipe(withDefault$2("."));
+	const localAppData = yield* string$5("LOCALAPPDATA").pipe(withDefault$2(""));
 	const xdgCache = yield* option(string$5("XDG_CACHE_HOME"));
-	const push = getOrElse(input.push, () => isNone(input.out) && !input.clipboard);
 	const scripts = [...input.evals, ...yield* forEach$1(input.evalFiles, (file) => fs.readFileString(file))];
+	const manifest = yield* forEach$1(toArray(input.manifest), (file) => fs.readFileString(file)).pipe(map$6((contents) => fromNullishOr(contents[0])));
+	const jobs = yield* expand(baseJob(input, scripts), input.urls, manifest, input.baseUrl);
+	const batch = jobs.length > 1;
+	const push = getOrElse(input.push, () => isNone(input.out) && !input.clipboard);
+	if (batch && input.clipboard) return yield* new UsageError({ message: "--clipboard takes a single capture" });
+	if (batch && getOrUndefined$1(input.out) === "-") return yield* new UsageError({ message: "--out - takes a single capture; pass a directory for several" });
 	const cacheDir = getOrElse(input.cacheDir, () => path.join(getOrElse(xdgCache, () => path.join(home, ".cache")), "paper-snap"));
 	const serializer = yield* (yield* Service$1).serializer({
 		extensionId: input.extensionId,
@@ -51633,93 +52744,141 @@ const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 		refresh: input.refreshExtension
 	});
 	yield* logDebug(`Paper Snapshot ${serializer.version} from ${serializer.origin}`);
-	const localAppData = yield* string$5("LOCALAPPDATA").pipe(withDefault$2(""));
-	const sources = yield* resolveSources(input, home, localAppData);
+	const runScope = yield* make$30();
+	yield* addFinalizer((exit) => close(runScope, exit));
+	const hasUrl = jobs.some((job) => isSome(job.url));
+	const sources = yield* resolveSources(input, hasUrl, home, localAppData);
 	const browser = yield* Service$2;
-	const viewport = isNone(input.width) && isNone(input.height) ? none() : some({
-		width: getOrElse(input.width, () => 1440),
-		height: getOrElse(input.height, () => 900)
-	});
-	const snapshot = yield* scoped(gen(function* () {
-		const session = yield* openFirst(browser, sources, {
-			viewport,
-			scale: input.scale,
-			colorScheme: input.colorScheme,
-			userAgent: input.userAgent,
-			locale: input.locale,
-			timezone: input.timezone,
-			headers: input.headers,
-			storageState: input.storageState,
-			connectTimeout: millis(input.connectTimeout),
-			tab: input.tab
-		}, isSome(input.url));
-		yield* logInfo(`Browser: ${session.origin}`);
-		return {
-			...yield* capture(session, input.url, serializer, {
-				selector: input.selector,
-				waitUntil: input.waitUntil,
-				navigationTimeout: millis(input.navigationTimeout),
-				networkIdleTimeout: millis(input.networkIdleTimeout),
-				waitFor: input.waitFor,
-				waitForTimeout: millis(input.waitForTimeout),
-				scripts,
-				scroll: {
-					enabled: input.scroll,
-					step: input.scrollStep,
-					delay: millis(input.scrollDelay),
-					maxDistance: input.scrollMax
-				},
-				settle: millis(input.settle),
-				pinImageHeights: input.pinImageHeights,
-				inlineImages: input.inlineImages,
-				imageTimeout: millis(input.imageTimeout),
-				captureTimeout: millis(input.captureTimeout)
+	const handle = yield* connectFirst(browser, sources, millis(input.connectTimeout)).pipe(provide$3(runScope));
+	yield* logInfo(`Browser: ${handle.origin}`);
+	const paperService = yield* Service;
+	const paper = yield* cached$1(paperService.connect({
+		bin: getOrElse(input.paperBin, () => path.join(home, ".paper", "bin", "paper")),
+		timeout: millis(input.paperTimeout)
+	}).pipe(provide$3(runScope)));
+	if (batch && isSome(input.out) && push !== true) yield* fs.makeDirectory(input.out.value, { recursive: true });
+	const placed = [];
+	const failures = [];
+	for (const job of jobs) if ((yield* scoped(gen(function* () {
+		const session = yield* handle.page({
+			viewport: isNone(job.width) && isNone(job.height) ? none() : some({
+				width: getOrElse(job.width, () => 1440),
+				height: getOrElse(job.height, () => 900)
 			}),
-			browser: session.origin
-		};
-	}));
-	yield* logInfo(`Captured ${Math.round(snapshot.html.length / 1024)} KB of HTML`);
-	if (isSome(input.out)) {
-		if (input.out.value === "-") yield* log(snapshot.html);
-		else yield* fs.writeFileString(input.out.value, snapshot.html);
-	}
-	if (input.clipboard) {
-		yield* write(snapshot.html);
-		yield* logInfo("Copied to the clipboard; paste into Paper with ⌘V");
-	}
-	const artboard = push ? some(yield* scoped(gen(function* () {
-		return yield* (yield* (yield* Service).connect({
-			bin: getOrElse(input.paperBin, () => path.join(home, ".paper", "bin", "paper")),
-			timeout: millis(input.paperTimeout)
-		})).place({
-			fileId: input.fileId,
-			pageId: input.pageId,
-			name: getOrElse(input.name, () => `${snapshot.title} · ${URL.parse(snapshot.url)?.host ?? snapshot.url}`),
+			scale: job.scale,
+			colorScheme: job.colorScheme,
+			userAgent: job.userAgent,
+			locale: job.locale,
+			timezone: job.timezone,
+			headers: job.headers,
+			storageState: job.storageState
+		}, isSome(job.url), job.tab);
+		return yield* capture(session, job.url, serializer, {
+			selector: job.selector,
+			state: {
+				localStorage: job.localStorage,
+				sessionStorage: job.sessionStorage,
+				cookies: job.cookies,
+				clicks: job.clicks
+			},
+			waitUntil: input.waitUntil,
+			navigationTimeout: millis(input.navigationTimeout),
+			networkIdleTimeout: millis(input.networkIdleTimeout),
+			waitFor: job.waitFor,
+			waitForTimeout: millis(input.waitForTimeout),
+			scripts: job.scripts,
+			scroll: {
+				enabled: input.scroll,
+				step: input.scrollStep,
+				delay: millis(input.scrollDelay),
+				maxDistance: input.scrollMax
+			},
+			settle: millis(job.settle),
+			fullPage: {
+				enabled: job.fullPage,
+				maxHeight: input.fullPageMaxHeight,
+				settle: millis(300)
+			},
+			inlineSprites: input.inlineSprites,
+			fixColspans: input.fixColspans,
+			pinImageHeights: input.pinImageHeights,
+			inlineImages: input.inlineImages,
+			imageTimeout: millis(input.imageTimeout),
+			captureTimeout: millis(input.captureTimeout)
+		});
+	})).pipe(flatMap$1((snapshot) => gen(function* () {
+		const name = getOrElse(job.name, () => `${snapshot.title} · ${URL.parse(snapshot.url)?.host ?? snapshot.url}`);
+		const warned = Object.entries(snapshot.warnings).filter(([, count]) => count > 0);
+		if (warned.length > 0) yield* logWarning(`${name}: ${warned.map(([kind, count]) => `${count} ${kind}`).join(", ")}`);
+		const out = map$11(input.out, (location) => batch ? path.join(location, `${job.index + 1}-${slug(name)}.html`) : location);
+		if (isSome(out)) {
+			if (out.value === "-") yield* log(snapshot.html);
+			else yield* fs.writeFileString(out.value, snapshot.html);
+		}
+		if (input.clipboard) {
+			yield* write(snapshot.html);
+			yield* logInfo("Copied to the clipboard; paste into Paper with ⌘V");
+		}
+		const artboard = push ? some(yield* paper.pipe(flatMap$1((connection) => connection.place(target(job, input, name, isPlaced(job) ? none() : nextPosition(input, placed)), {
 			width: snapshot.width,
-			height: snapshot.height,
-			x: input.x,
-			y: input.y
-		}, snapshot.html, input.keepOnFailure);
-	}))) : none();
-	yield* forEach$1(toArray(artboard), (placed) => logInfo(`Created artboard ${placed.artboardId} in file ${placed.fileId}`));
-	if (input.json) {
-		const summary = yield* encodeSummary({
+			height: snapshot.height
+		}, snapshot.html, input.keepOnFailure)))) : none();
+		yield* forEach$1(toArray(artboard), (done) => gen(function* () {
+			placed.push(done);
+			yield* logInfo(`${done.replaced ? "Replaced" : "Created"} artboard ${done.artboardId} in file ${done.fileId}`);
+		}));
+		if (input.json) yield* log(yield* encodeSummary({
+			index: job.index,
 			url: snapshot.url,
 			title: snapshot.title,
+			name: getOrNull(map$11(artboard, (done) => done.name)),
 			width: snapshot.width,
 			height: snapshot.height,
 			bytes: snapshot.html.length,
 			inlinedImages: snapshot.inlinedImages,
+			warnings: snapshot.warnings,
 			extensionVersion: serializer.version,
-			browser: snapshot.browser,
-			fileId: getOrNull(map$11(artboard, (placed) => placed.fileId)),
-			artboardId: getOrNull(map$11(artboard, (placed) => placed.artboardId)),
-			out: getOrNull(input.out),
+			browser: handle.origin,
+			fileId: getOrNull(map$11(artboard, (done) => done.fileId)),
+			artboardId: getOrNull(map$11(artboard, (done) => done.artboardId)),
+			x: getOrNull(map$11(artboard, (done) => done.x)),
+			y: getOrNull(map$11(artboard, (done) => done.y)),
+			replaced: match$5(artboard, {
+				onNone: () => false,
+				onSome: (done) => done.replaced
+			}),
+			out: getOrNull(out),
 			clipboard: input.clipboard
-		});
-		yield* log(summary);
-	}
-})).pipe(withDescription$1("Snapshot a URL, local dev server, or an already-open browser tab into Paper as editable layers, using the Paper Snapshot extension's serializer."), withExamples([
+		}));
+	})), catch_((error) => gen(function* () {
+		failures.push(error.message);
+		const url = getOrNull(job.url);
+		if (batch) yield* logError(`${url ?? "current tab"}: ${error.message}`);
+		if (input.json) yield* log(yield* encodeFailure({
+			index: job.index,
+			url,
+			error: {
+				tag: error._tag,
+				message: error.message
+			}
+		}));
+		return input.failFast;
+	})))) === true) break;
+	if (failures.length > 0) return yield* new CapturesFailed({ message: batch ? `${failures.length} of ${jobs.length} captures failed` : failures[0] ?? "Capture failed" });
+});
+/** Applies --quiet and, under --json, reports run-level failures as a JSON line on stdout. */
+const run = (input) => {
+	const program = handler(input).pipe(scoped, tapError((error) => input.json && !is(CapturesFailed)(error) ? encodeFailure({
+		index: null,
+		url: null,
+		error: {
+			tag: error._tag,
+			message: error.message
+		}
+	}).pipe(flatMap$1(log), ignore) : void_));
+	return input.quiet ? program.pipe(provideService(MinimumLogLevel, "Warn")) : program;
+};
+const command = make$5("paper-snap", flags, run).pipe(withDescription$1("Snapshot URLs, local dev servers, or an already-open browser tab into Paper as editable layers, using the Paper Snapshot extension's serializer."), withExamples([
 	{
 		command: "paper-snap https://linear.app",
 		description: "Whole page into the open Paper file"
@@ -51727,6 +52886,22 @@ const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 	{
 		command: "paper-snap http://localhost:3000 -s \"#pricing\" --width 390 --height 844",
 		description: "One element of a local dev server, mobile viewport"
+	},
+	{
+		command: "paper-snap http://localhost:3000/ /pricing /settings --layout row",
+		description: "Several screens side by side"
+	},
+	{
+		command: "paper-snap --manifest screens.json --json",
+		description: "A batch from a manifest; one JSON line per artboard"
+	},
+	{
+		command: "paper-snap http://localhost:3000/settings --replace 1A-0",
+		description: "Refresh an existing artboard after the app changed"
+	},
+	{
+		command: "paper-snap http://localhost:3000 --local-storage theme=dark --color-scheme dark",
+		description: "Dark mode for an app that stores its theme"
 	},
 	{
 		command: "paper-snap",
@@ -51737,23 +52912,15 @@ const command = make$5("paper-snap", flags, fn("paper-snap")(function* (input) {
 		description: "Capture a tab of your everyday Chrome (remote debugging enabled)"
 	},
 	{
-		command: "paper-snap --source playwriter --tab localhost:3000",
-		description: "Capture a tab of your own Chrome through the Playwriter extension"
-	},
-	{
 		command: "paper-snap --cdp http://localhost:9222",
 		description: "Capture the active tab of any CDP browser"
-	},
-	{
-		command: "paper-snap https://example.com --out snap.html --json",
-		description: "HTML only, JSON summary"
 	}
 ]));
 //#endregion
 //#region src/bin.ts
 const LoggerLive = mergeAll(layer$4([consolePretty({ stderr: true })]), succeed$3(LogToStderr, true));
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run(command, { version: "0.2.0" }).pipe(tapError((error) => error$1(`paper-snap: ${error.message}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.3.0" }).pipe(tapError((error) => error$1(`paper-snap: ${error.message}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);

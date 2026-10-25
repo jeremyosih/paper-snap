@@ -7,6 +7,7 @@ import * as Schema from "effect/Schema";
 import type { BrowserContext, Page } from "playwright-core";
 import type * as Browser from "./browser.ts";
 import type * as Extension from "./extension.ts";
+import * as Prepare from "./prepare.ts";
 
 type WaitUntil = "load" | "domcontentloaded" | "networkidle" | "commit";
 
@@ -20,8 +21,19 @@ export interface Scroll {
   readonly maxDistance: number;
 }
 
+/** Page state set up before capturing, so most flows need no scripting. */
+export interface State {
+  readonly localStorage: Readonly<Record<string, string>>;
+  readonly sessionStorage: Readonly<Record<string, string>>;
+  /** `name=value`, optionally followed by `; domain=…; path=…; secure; httponly`. */
+  readonly cookies: ReadonlyArray<string>;
+  /** Selectors clicked in order once the page has loaded. */
+  readonly clicks: ReadonlyArray<string>;
+}
+
 export interface Settings {
   readonly selector: string;
+  readonly state: State;
   readonly waitUntil: WaitUntil;
   readonly navigationTimeout: Duration.Duration;
   /** Zero skips waiting for the network to go idle. */
@@ -31,6 +43,9 @@ export interface Settings {
   readonly scripts: ReadonlyArray<string>;
   readonly scroll: Scroll;
   readonly settle: Duration.Duration;
+  readonly fullPage: Prepare.FullPage;
+  readonly inlineSprites: boolean;
+  readonly fixColspans: boolean;
   readonly pinImageHeights: boolean;
   readonly inlineImages: ImageInlining;
   readonly imageTimeout: Duration.Duration;
@@ -39,6 +54,7 @@ export interface Settings {
 
 interface Snapshot {
   readonly html: string;
+  readonly warnings: Prepare.Warnings;
   readonly width: number;
   readonly height: number;
   readonly title: string;
@@ -201,6 +217,50 @@ const unpinImageHeights = (page: Page) =>
     }),
   ).pipe(Effect.ignore);
 
+/** Parses `name=value; domain=…; path=…; secure; httponly` into a Playwright cookie. */
+const parseCookie = (spec: string, pageUrl: string) => {
+  const [pair = "", ...attributes] = spec.split(";").map((part) => part.trim());
+  const separator = pair.indexOf("=");
+  const name = separator === -1 ? pair : pair.slice(0, separator);
+  const value = separator === -1 ? "" : pair.slice(separator + 1);
+
+  const options = new Map(
+    attributes.map((attribute) => {
+      const [key = "", ...rest] = attribute.split("=");
+
+      return [key.trim().toLowerCase(), rest.join("=").trim()] as const;
+    }),
+  );
+
+  const domain = options.get("domain");
+  const secure = options.has("secure");
+  const httpOnly = options.has("httponly");
+
+  return domain === undefined
+    ? { name, value, url: pageUrl, secure, httpOnly }
+    : { name, value, domain, path: options.get("path") ?? "/", secure, httpOnly };
+};
+
+const hasStorage = (state: State) =>
+  Object.keys(state.localStorage).length > 0 || Object.keys(state.sessionStorage).length > 0;
+
+/** Seeds storage before the page's own scripts run, so apps boot with it (theme, flags, auth). */
+const seedStorage = (page: Page, state: State) =>
+  step("storage", () =>
+    page.addInitScript(
+      ([local, session]) => {
+        try {
+          for (const [key, value] of Object.entries(local)) localStorage.setItem(key, value);
+
+          for (const [key, value] of Object.entries(session)) sessionStorage.setItem(key, value);
+        } catch {
+          // Opaque origins (about:blank) have no storage.
+        }
+      },
+      [state.localStorage, state.sessionStorage] as const,
+    ),
+  );
+
 /** Navigates (when a URL is given), prepares the page, and serializes the selected element. */
 export const capture = Effect.fn("Capture.capture")(function* (
   session: Browser.Session,
@@ -209,6 +269,26 @@ export const capture = Effect.fn("Capture.capture")(function* (
   settings: Settings,
 ) {
   const { page } = session;
+  const { state } = settings;
+
+  if (state.cookies.length > 0) {
+    const base = Option.getOrElse(url, () => page.url());
+    yield* step("cookies", () =>
+      session.context.addCookies(state.cookies.map((cookie) => parseCookie(cookie, base))),
+    );
+  }
+
+  if (hasStorage(state)) yield* seedStorage(page, state);
+
+  // Without a URL the tab is already loaded: reload so cookies and storage take effect.
+  if (Option.isNone(url) && (hasStorage(state) || state.cookies.length > 0)) {
+    yield* step("reload", () =>
+      page.reload({
+        waitUntil: settings.waitUntil,
+        timeout: Duration.toMillis(settings.navigationTimeout),
+      }),
+    );
+  }
 
   if (Option.isSome(url)) {
     yield* Effect.logInfo(`Loading ${url.value}`);
@@ -238,6 +318,20 @@ export const capture = Effect.fn("Capture.capture")(function* (
     discard: true,
   });
 
+  for (const selector of state.clicks) {
+    yield* step("click", () =>
+      page
+        .locator(selector)
+        .first()
+        .click({ timeout: Duration.toMillis(settings.waitForTimeout) }),
+    );
+
+    if (idle > 0)
+      yield* step("network-idle", () =>
+        page.waitForLoadState("networkidle", { timeout: idle }),
+      ).pipe(Effect.ignore);
+  }
+
   if (settings.scroll.enabled) {
     yield* autoScroll(page, settings.scroll);
 
@@ -262,30 +356,63 @@ export const capture = Effect.fn("Capture.capture")(function* (
     ] as const),
   );
 
-  const rect = yield* step("measure", () =>
-    target.evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
+  const prepared = yield* Effect.gen(function* () {
+    const sprites = settings.inlineSprites
+      ? yield* Prepare.inlineSprites(page, session.context, settings.imageTimeout)
+      : { resolved: 0, unresolved: 0 };
 
-      return { width: Math.ceil(bounds.width), height: Math.ceil(bounds.height) };
-    }),
-  ).pipe(Effect.flatMap(decodeAt("measure", Rect)));
+    if (settings.fixColspans) yield* Prepare.fixColspans(page);
+    const fullPage = yield* Prepare.growToFullPage(page, settings.fullPage);
 
-  yield* Effect.logInfo(`Capturing ${settings.selector} (${rect.width}×${rect.height})`);
+    yield* Effect.addFinalizer(() => fullPage.reset);
 
-  if (settings.pinImageHeights) yield* pinImageHeights(page);
-  // The stamp is digits only, so the selector literal needs no escaping.
-  const expression = `(${serializer.source})('[${markAttribute}="${stamp}"]')`;
+    if (settings.pinImageHeights) yield* pinImageHeights(page);
 
-  const result = yield* step("serialize", () => page.evaluate(expression)).pipe(
-    Effect.timeout(settings.captureTimeout),
+    const rect = yield* step("measure", () =>
+      target.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+
+        return { width: Math.ceil(bounds.width), height: Math.ceil(bounds.height) };
+      }),
+    ).pipe(Effect.flatMap(decodeAt("measure", Rect)));
+
+    const scanned = yield* Prepare.scan(target);
+
+    yield* Effect.logInfo(`Capturing ${settings.selector} (${rect.width}×${rect.height})`);
+
+    // The stamp is digits only, so the selector literal needs no escaping.
+    const expression = `(${serializer.source})('[${markAttribute}="${stamp}"]')`;
+
+    const result = yield* step("serialize", () => page.evaluate(expression)).pipe(
+      Effect.timeout(settings.captureTimeout),
+      Effect.mapError((error) =>
+        Schema.is(CaptureError)(error)
+          ? error
+          : new CaptureError({ stage: "serialize", message: "Timed out" }),
+      ),
+      Effect.flatMap(decodeAt("serialize", CaptureResult)),
+    );
+
+    const warnings: Prepare.Warnings = {
+      emptySvgs: scanned.emptySvgs,
+      unresolvedSprites: sprites.unresolved,
+      clippedScrollContainers: fullPage.clipped,
+      unresolvedImages: scanned.unresolvedImages,
+      lostColspans: scanned.colspans,
+    };
+
+    return { rect, result, warnings };
+  }).pipe(
+    Effect.ensuring(Effect.all([unpinImageHeights(page), Prepare.restore(page)])),
+    Effect.scoped,
     Effect.mapError((error) =>
-      Schema.is(CaptureError)(error)
-        ? error
-        : new CaptureError({ stage: "serialize", message: "Timed out" }),
+      Schema.is(Prepare.PrepareError)(error)
+        ? new CaptureError({ stage: error.stage, message: error.message })
+        : error,
     ),
-    Effect.flatMap(decodeAt("serialize", CaptureResult)),
-    Effect.ensuring(settings.pinImageHeights ? unpinImageHeights(page) : Effect.void),
   );
+
+  const { rect, result, warnings } = prepared;
 
   if (result.status === "aborted")
     return yield* new CaptureError({ stage: "serialize", message: "Aborted" });
@@ -307,6 +434,7 @@ export const capture = Effect.fn("Capture.capture")(function* (
 
   return {
     html: images.html,
+    warnings,
     width: rect.width,
     height: rect.height,
     title: title === "" ? (URL.parse(pageUrl)?.host ?? pageUrl) : title,

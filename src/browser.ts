@@ -1,4 +1,4 @@
-/** Acquires a Chromium page: a launched local browser, a CDP endpoint, or agent-browser's session. */
+/** Chromium pages from a launched local browser or an attached one (Chrome, agent-browser, Playwriter, CDP). */
 import * as Context from "effect/Context";
 import * as Data from "effect/Data";
 import * as Duration from "effect/Duration";
@@ -41,6 +41,7 @@ interface Viewport {
   readonly height: number;
 }
 
+/** Per-capture page emulation. */
 export interface PageSettings {
   /** None keeps an attached tab's current viewport; launched browsers fall back to 1440×900. */
   readonly viewport: Option.Option<Viewport>;
@@ -51,16 +52,29 @@ export interface PageSettings {
   readonly timezone: Option.Option<string>;
   readonly headers: Readonly<Record<string, string>>;
   readonly storageState: Option.Option<string>;
-  readonly connectTimeout: Duration.Duration;
-  /** Attached browsers: pick the tab whose URL or title contains this text. */
-  readonly tab: Option.Option<string>;
 }
 
 export interface Session {
   readonly page: Page;
   readonly context: BrowserContext;
-  /** Human-readable description of where the page came from. */
+  /** Whether the page is a tab the user or an agent already had open. */
+  readonly existingTab: boolean;
+}
+
+/** A connected or launched browser, shared by every capture in a run. */
+export interface Handle {
+  /** Human-readable description of where pages come from. */
   readonly origin: string;
+  /**
+   * A page for one capture, released with the scope. Launched browsers always get a fresh
+   * context. Attached browsers get a new tab with `freshTab`, otherwise the tab matching `tab`
+   * (URL or title text), else the visible tab.
+   */
+  readonly page: (
+    settings: PageSettings,
+    freshTab: boolean,
+    tab: Option.Option<string>,
+  ) => Effect.Effect<Session, BrowserError, Scope.Scope>;
 }
 
 export class BrowserError extends Schema.TaggedError<BrowserError>()("Browser.BrowserError", {
@@ -68,15 +82,10 @@ export class BrowserError extends Schema.TaggedError<BrowserError>()("Browser.Br
 }) {}
 
 export interface Interface {
-  /**
-   * Opens a page. With `freshTab` an attached browser gets a new tab that is closed with the
-   * scope; without it the attached browser's active tab is used as-is.
-   */
-  readonly open: (
+  readonly connect: (
     source: Source,
-    settings: PageSettings,
-    freshTab: boolean,
-  ) => Effect.Effect<Session, BrowserError, Scope.Scope>;
+    connectTimeout: Duration.Duration,
+  ) => Effect.Effect<Handle, BrowserError, Scope.Scope>;
 }
 
 export class Service extends Context.Service<Service, Interface>()("paper-snap/browser/Service") {}
@@ -283,22 +292,27 @@ export const layer = Layer.effect(
       }),
     });
 
-    const openLaunched = Effect.fn("Browser.openLaunched")(function* (
+    const launchedHandle = Effect.fn("Browser.launchedHandle")(function* (
       source: Extract<Source, { readonly _tag: "Launch" }>,
-      settings: PageSettings,
+      connectTimeout: Duration.Duration,
     ) {
       const { browser, origin } = yield* Effect.acquireRelease(
-        launch(source, settings.connectTimeout),
+        launch(source, connectTimeout),
         ({ browser }) => close(browser),
       );
 
-      const context = yield* attempt("Creating browser context", () =>
-        browser.newContext(contextOptions(settings)),
-      );
+      const page = Effect.fn("Browser.launchedPage")(function* (settings: PageSettings) {
+        const context = yield* Effect.acquireRelease(
+          attempt("Creating browser context", () => browser.newContext(contextOptions(settings))),
+          (context) => Effect.promise(() => context.close()).pipe(Effect.ignore),
+        );
 
-      const page = yield* attempt("Opening tab", () => context.newPage());
+        const tab = yield* attempt("Opening tab", () => context.newPage());
 
-      return { page, context, origin };
+        return { page: tab, context, existingTab: false };
+      });
+
+      return { origin, page } satisfies Handle;
     });
 
     /** The tab the user or agent is looking at: a URL/title match, else the visible tab, else the last. */
@@ -339,32 +353,12 @@ export const layer = Layer.effect(
       return content.at(-1) ?? pages.at(-1);
     });
 
-    const openAttached = Effect.fn("Browser.openAttached")(function* (
-      endpoint: string,
-      origin: string,
+    /** Applies emulation to an attached tab; an existing tab gets it removed again on release. */
+    const emulate = Effect.fn("Browser.emulate")(function* (
+      page: Page,
       settings: PageSettings,
-      freshTab: boolean,
+      existingTab: boolean,
     ) {
-      // Never `browser.close()` an attached browser: over CDP that closes the user's Chrome.
-      // The connection ends with the process.
-      const browser = yield* attempt(`Connecting to ${endpoint}`, () =>
-        chromium.connectOverCDP(endpoint, { timeout: Duration.toMillis(settings.connectTimeout) }),
-      );
-
-      const context = browser.contexts()[0];
-
-      if (context === undefined)
-        return yield* new BrowserError({ message: `${endpoint} has no browser context` });
-
-      const page = freshTab
-        ? yield* Effect.acquireRelease(
-            attempt("Opening tab", () => context.newPage()),
-            (tab) => Effect.promise(() => tab.close()).pipe(Effect.ignore),
-          )
-        : yield* pickTab(context.pages(), settings.tab);
-
-      if (page === undefined)
-        return yield* new BrowserError({ message: `${endpoint} has no open tab` });
       yield* Effect.forEach(Option.toArray(settings.viewport), (viewport) =>
         attempt("Resizing viewport", () => page.setViewportSize(viewport)),
       );
@@ -376,7 +370,68 @@ export const layer = Layer.effect(
         yield* attempt("Setting headers", () => page.setExtraHTTPHeaders(settings.headers));
       }
 
-      return { page, context, origin };
+      if (Option.isSome(settings.storageState)) {
+        yield* Effect.logWarning(
+          "--storage-state applies to launched browsers; attached browsers keep their own session",
+        );
+      }
+
+      if (
+        existingTab &&
+        (Option.isSome(settings.viewport) || Option.isSome(settings.colorScheme))
+      ) {
+        yield* Effect.addFinalizer(() =>
+          attempt("Restoring tab", async () => {
+            await page.emulateMedia({ colorScheme: null });
+            const session = await page.context().newCDPSession(page);
+            await session.send("Emulation.clearDeviceMetricsOverride");
+            await session.detach();
+          }).pipe(Effect.ignore),
+        );
+      }
+    });
+
+    const attachedHandle = Effect.fn("Browser.attachedHandle")(function* (
+      endpoint: string,
+      origin: string,
+      connectTimeout: Duration.Duration,
+      defaultTab: Option.Option<string>,
+    ) {
+      // Never `browser.close()` an attached browser: over CDP that closes the user's Chrome.
+      // The connection ends with the process.
+      const browser = yield* attempt(`Connecting to ${endpoint}`, () =>
+        chromium.connectOverCDP(endpoint, { timeout: Duration.toMillis(connectTimeout) }),
+      );
+
+      const context = browser.contexts()[0];
+
+      if (context === undefined)
+        return yield* new BrowserError({ message: `${endpoint} has no browser context` });
+
+      const page = Effect.fn("Browser.attachedPage")(function* (
+        settings: PageSettings,
+        freshTab: boolean,
+        tab: Option.Option<string>,
+      ) {
+        const target = freshTab
+          ? yield* Effect.acquireRelease(
+              attempt("Opening tab", () => context.newPage()),
+              (opened) => Effect.promise(() => opened.close()).pipe(Effect.ignore),
+            )
+          : yield* pickTab(
+              context.pages(),
+              Option.orElse(tab, () => defaultTab),
+            );
+
+        if (target === undefined)
+          return yield* new BrowserError({ message: `${endpoint} has no open tab` });
+
+        yield* emulate(target, settings, !freshTab);
+
+        return { page: target, context, existingTab: !freshTab };
+      });
+
+      return { origin, page } satisfies Handle;
     });
 
     /** Chrome publishes its debugging port and browser path in `<user data dir>/DevToolsActivePort`. */
@@ -406,37 +461,34 @@ export const layer = Layer.effect(
       return `ws://127.0.0.1:${port}${browserPath}`;
     });
 
-    const open = Effect.fn("Browser.open")(function* (
+    const connect = Effect.fn("Browser.connect")(function* (
       source: Source,
-      settings: PageSettings,
-      freshTab: boolean,
+      connectTimeout: Duration.Duration,
     ) {
       return yield* Source.$match(source, {
-        Launch: (launchSource) => openLaunched(launchSource, settings),
-        Attach: ({ endpoint }) => openAttached(endpoint, endpoint, settings, freshTab),
-        Playwriter: ({ endpoint }) => openAttached(endpoint, "playwriter", settings, freshTab),
+        Launch: (launchSource) => launchedHandle(launchSource, connectTimeout),
+        Attach: ({ endpoint }) => attachedHandle(endpoint, endpoint, connectTimeout, Option.none()),
+        Playwriter: ({ endpoint }) =>
+          attachedHandle(endpoint, "playwriter", connectTimeout, Option.none()),
         Chrome: ({ userDataDir }) =>
           Effect.gen(function* () {
             const endpoint = yield* chromeEndpoint(userDataDir);
 
             yield* Effect.logInfo("Connecting to Chrome; click Allow if Chrome asks");
 
-            return yield* openAttached(endpoint, "chrome", settings, freshTab);
+            return yield* attachedHandle(endpoint, "chrome", connectTimeout, Option.none());
           }),
         AgentBrowser: (agentSource) =>
           Effect.gen(function* () {
-            const endpoint = yield* agentBrowserEndpoint(agentSource, settings.connectTimeout);
+            const endpoint = yield* agentBrowserEndpoint(agentSource, connectTimeout);
+            // agent-browser knows which tab it is driving; that is the default tab.
+            const current = yield* agentBrowserUrl(agentSource, connectTimeout).pipe(Effect.option);
 
-            // agent-browser knows which tab it is driving; default --tab to that tab's URL.
-            const tab = Option.isSome(settings.tab)
-              ? settings.tab
-              : yield* agentBrowserUrl(agentSource, settings.connectTimeout).pipe(Effect.option);
-
-            return yield* openAttached(endpoint, "agent-browser", { ...settings, tab }, freshTab);
+            return yield* attachedHandle(endpoint, "agent-browser", connectTimeout, current);
           }),
       });
     });
 
-    return Service.of({ open });
+    return Service.of({ connect });
   }),
 );

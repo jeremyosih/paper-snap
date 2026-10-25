@@ -1,35 +1,36 @@
 ---
 name: paper-snap
-description: Snapshot web UI into Paper as editable layers. Use when a URL, local dev server, component, or live browser state should land in a Paper file.
+description: Snapshot web UI into Paper as editable layers. Use when a URL, local dev server, set of app screens, or live browser state should land in a Paper file, or when Paper artboards need refreshing from the app.
 ---
 
 # paper-snap
 
-`paper-snap` serializes a page or element with Paper Snapshot's own serializer and writes it as a new artboard into the file open in the Paper app. Every behaviour is a flag; `paper-snap --help` is the reference.
+`paper-snap` serializes pages with Paper Snapshot's own serializer and writes each as an artboard into the file open in the Paper app. Every behaviour is a flag; `paper-snap --help` is the reference.
 
 ## Steps
 
 1. **Pick the source.**
-   - A URL, public or localhost, with no interaction needed: `paper-snap <url>`. It launches the installed Chrome headlessly.
-   - A state that takes interaction to reach (logged in, modal open, form filled): get the browser there first, then capture its tab without a URL.
-     - agent-browser: `paper-snap` (it captures the tab agent-browser is on).
-     - The user's everyday Chrome, also what Chrome DevTools MCP drives with `--autoConnect`: `paper-snap --source chrome --tab <text in the tab's URL or title>`. This needs remote debugging enabled at `chrome://inspect/#remote-debugging`, and the user clicks Allow when Chrome asks.
+   - URLs, public or localhost: `paper-snap <url> [<url or /path>…]`. It launches the installed Chrome headlessly.
+   - A state that takes interaction to reach and that page-state flags (step 2) cannot set up: get a browser there, then capture its tab without a URL.
+     - agent-browser: `paper-snap` (captures the tab agent-browser is on).
+     - The user's everyday Chrome, also what Chrome DevTools MCP drives with `--autoConnect`: `paper-snap --source chrome --tab <text in the tab's URL or title>`. This needs remote debugging enabled at `chrome://inspect/#remote-debugging`; the user clicks Allow when Chrome asks.
      - Playwriter: `--source playwriter --tab <text>`. Any other CDP browser: `--cdp <endpoint>`.
 
-   Done when you know which command you will run.
+2. **Set up the state.** Sign-in: `--storage-state auth.json`, or `--cookie "name=value"`. Theme and flags that apps keep in storage: `--local-storage key=value` (`--color-scheme dark` alone only flips the media query). Menus and dialogs: `--click <selector>`, repeatable, in order. `--eval` covers anything else.
 
-2. **Scope it.** `-s <css>` captures one element (a card, a nav, a dialog); the default is the whole page. Match the device with `--width`/`--height`, and dark mode with `--color-scheme dark`.
+3. **Scope it.** `-s <css>` captures one element; the default is the whole page. Internal scroll containers (`h-screen` shells) are unclipped automatically. Match the device with `--width`/`--height`.
 
-3. **Run with `--json`.** Stdout carries one JSON line (`artboardId`, `fileId`, `width`, `height`, `url`); logs go to stderr. A failure exits non-zero with one `paper-snap: <reason>` line.
+4. **Place it.** One screen: optional `--name`, `--page-id`, `--x/--y`, `--below <artboardId>` or `--right-of <artboardId>`. Several screens: pass several URLs, or a `--manifest` JSON file whose items set per-screen fields (`name`, `colorScheme`, `localStorage`, `x`, `below`, `replace`, …). They share one browser and one Paper connection and are arranged by `--layout row|column|grid`. Refreshing a screen after the app changed: `--replace <artboardId>`, which keeps the artboard's id, position and name.
 
-4. **Verify.** Screenshot the artboard with the Paper MCP `get_screenshot`, using `fileId` and `artboardId` from the JSON. Done when the artboard shows the intended state, with images and sections intact.
+5. **Run with `--json`.** Stdout carries one JSON line per artboard: `artboardId`, `fileId`, `x`, `y`, `width`, `height`, and `warnings`. A failed capture prints `{"index", "url", "error"}`, the batch continues, and the exit code is 1.
+
+6. **Verify.** Read each line's `warnings`; any non-zero count names what imported badly (`emptySvgs`, `unresolvedSprites`, `clippedScrollContainers`, `unresolvedImages`, `lostColspans`). Screenshot flagged artboards with the Paper MCP `get_screenshot`. Done when every artboard shows the intended state with zero warnings, or the remaining ones are explained.
 
 ## Gotchas
 
 - The Paper app must be running: the push goes through its MCP relay at `~/.paper/bin/paper`. `--file-id` and `--page-id` target a specific file and page.
-- Snapshots run to several MB. Let paper-snap carry the HTML; reach for `--out snap.html` when a file on disk is the goal.
+- Snapshots run to several MB. Let paper-snap carry the HTML; `--out` writes it to disk (a directory for several captures).
 - Images on localhost and private hosts are inlined automatically because Paper cannot reach them. Use `--inline-images always` for assets behind auth.
 - Sections that animate in on scroll can come out blank: give them time with `--settle 2000`, or force the final state with `--eval`.
-- Auth: attach to a browser that is already logged in (`--source chrome` is the user's own session), or pass `--storage-state <file>` to a launched one.
 - Attached browsers stay open. Passing a URL while attached opens a temporary tab and closes it afterwards.
-- The first run downloads the Paper Snapshot extension from the Chrome Web Store and caches it in `~/.cache/paper-snap`.
+- `--quiet` keeps stderr to warnings and errors across long batches.

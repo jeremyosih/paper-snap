@@ -26,7 +26,7 @@ const MainLive = Layer.mergeAll(
 ).pipe(Layer.provideMerge(NodeServices.layer), Layer.provideMerge(LoggerLive));
 
 // One readable line per failure; parse errors and help are rendered by the CLI itself.
-Command.run(Cli.command, { version: "0.2.0" }).pipe(
+Command.run(Cli.command, { version: "0.3.0" }).pipe(
   Effect.tapError((error) => Console.error(`paper-snap: ${error.message}`)),
   Effect.provide(MainLive),
   NodeRuntime.runMain({
