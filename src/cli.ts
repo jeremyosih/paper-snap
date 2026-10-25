@@ -270,7 +270,13 @@ const flags = {
   failFast: toggle("fail-fast", false, "Stop at the first failed capture"),
 
   // Paper placement
-  fileId: optionalString("file-id", "Paper file id (default: the file open in Paper)"),
+  fileId: Flag.String("file-id").pipe(
+    Flag.withDescription(
+      "Paper file id (default: $PAPER_SNAPSHOT_FILE_ID, else the file in front in Paper)",
+    ),
+    Flag.withFallbackConfig(Config.String("PAPER_SNAPSHOT_FILE_ID")),
+    Flag.optional,
+  ),
   pageId: optionalString("page-id", "Paper page id (default: the active page)"),
   name: optionalString("name", "Artboard name (default: page title · host)"),
   x: optionalInteger("x", "Artboard x position on the canvas"),

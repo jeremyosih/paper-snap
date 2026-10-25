@@ -54613,7 +54613,7 @@ const NodeInfo = fromJsonString(Struct({
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snapshot",
-		version: "0.1.3"
+		version: "0.1.4"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -54889,7 +54889,7 @@ const flags = {
 	json: toggle("json", false, "Print one JSON line per capture on stdout; failures print {\"index\", \"url\", \"error\"}"),
 	quiet: toggle("quiet", false, "Only log warnings and errors (same as --log-level warn)"),
 	failFast: toggle("fail-fast", false, "Stop at the first failed capture"),
-	fileId: optionalString("file-id", "Paper file id (default: the file open in Paper)"),
+	fileId: String$1("file-id").pipe(withDescription$1("Paper file id (default: $PAPER_SNAPSHOT_FILE_ID, else the file in front in Paper)"), withFallbackConfig(String$6("PAPER_SNAPSHOT_FILE_ID")), optional$1),
 	pageId: optionalString("page-id", "Paper page id (default: the active page)"),
 	name: optionalString("name", "Artboard name (default: page title · host)"),
 	x: optionalInteger("x", "Artboard x position on the canvas"),
@@ -55280,7 +55280,7 @@ const LoggerLive = layer$4([make$6((options) => {
 	process.stderr.write(`${mark} ${text}\n`);
 })]);
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.1.3" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.1.4" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);

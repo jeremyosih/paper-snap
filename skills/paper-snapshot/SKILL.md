@@ -31,7 +31,7 @@ description: Snapshot web UI into Paper as editable layers. Use when a URL, loca
 Tell the user before running a command that waits on them, and name what they will see.
 
 - **Chrome "Allow remote debugging?" dialog** (`--source chrome`, and auto without a URL when agent-browser is absent). One-time setup: the user turns on remote debugging at `chrome://inspect/#remote-debugging`; Chrome then shows "Server running at 127.0.0.1:9222". Every run opens a fresh connection, so Chrome shows "Allow remote debugging?" each time, on the machine where Chrome runs. The command blocks until the user clicks **Allow**, for up to `--chrome-approval-timeout` (2 min). **Cancel** fails the run. While attached, Chrome shows a "controlled by automated test software" banner. A batch asks once. On a remote machine, the person at that screen has to click.
-- **Paper app.** It must be running with a file open, or pass `--file-id`. Pushing needs no approval.
+- **Paper app.** It must be running. Without `--file-id` (or `PAPER_SNAPSHOT_FILE_ID`), artboards go to the file in front in Paper, which may not be the one the user means: in scripts and batches, always pass the file id. Pushing needs no approval.
 - **agent-browser / Playwriter.** No prompt, but an agent-browser session must be open (`agent-browser open <url>`), or Playwriter's extension must be connected to its relay.
 - **First run.** paper-snapshot downloads the Paper Snapshot extension once (network required). Without an installed Chrome, Edge, Brave or Chromium it also downloads headless Chromium once.
 
