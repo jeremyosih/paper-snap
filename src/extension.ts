@@ -50,7 +50,7 @@ export interface Interface {
 }
 
 export class Service extends Context.Service<Service, Interface>()(
-  "paper-snapshot/extension/Service",
+  "paper-snapshot-cli/extension/Service",
 ) {}
 
 const Manifest = Schema.Struct({ version: Schema.String });

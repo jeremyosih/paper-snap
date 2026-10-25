@@ -97,7 +97,7 @@ export interface Interface {
 }
 
 export class Service extends Context.Service<Service, Interface>()(
-  "paper-snapshot/browser/Service",
+  "paper-snapshot-cli/browser/Service",
 ) {}
 
 const defaultViewport: Viewport = { width: 1440, height: 900 };

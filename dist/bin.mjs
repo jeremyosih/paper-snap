@@ -36498,7 +36498,7 @@ const layer$3 = /*#__PURE__*/ layerMergedContext(/*#__PURE__*/ succeed$2(/* @__P
 /** Chromium pages from a launched local browser or an attached one (Chrome, agent-browser, Playwriter, CDP). */
 const Source = taggedEnum();
 var BrowserError = class extends TaggedError()("Browser.BrowserError", { message: String$7 }) {};
-var Service$2 = class extends Service$3()("paper-snapshot/browser/Service") {};
+var Service$2 = class extends Service$3()("paper-snapshot-cli/browser/Service") {};
 const defaultViewport = {
 	width: 1440,
 	height: 900
@@ -37913,7 +37913,7 @@ const paperSnapshotId = "lidfahaahiogmnlccifabccgplofocck";
 /** Strings only the extension's DOM serializer contains. */
 const serializerMarkers = ["x-paper-style-reference", "paper-snapshot-original-tag"];
 var ExtensionError = class extends TaggedError()("Extension.ExtensionError", { message: String$7 }) {};
-var Service$1 = class extends Service$3()("paper-snapshot/extension/Service") {};
+var Service$1 = class extends Service$3()("paper-snapshot-cli/extension/Service") {};
 const decodeManifest$1 = decodeUnknownEffect(fromJsonString(Struct({ version: String$7 })));
 const textDecoder = new TextDecoder();
 /** CRX3: "Cr24", format version, header length, header, then a plain zip archive. */
@@ -54677,7 +54677,7 @@ var PaperError = class extends TaggedError()("Paper.PaperError", {
 	tool: String$7,
 	message: String$7
 }) {};
-var Service = class extends Service$3()("paper-snapshot/paper/Service") {};
+var Service = class extends Service$3()("paper-snapshot-cli/paper/Service") {};
 const TextBlock = Struct({
 	type: Literal("text"),
 	text: String$7

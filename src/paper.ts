@@ -79,7 +79,7 @@ export interface Interface {
 }
 
 export class Service extends Context.Service<Service, Interface>()(
-  "paper-snapshot/paper/Service",
+  "paper-snapshot-cli/paper/Service",
 ) {}
 
 const TextBlock = Schema.Struct({ type: Schema.Literal("text"), text: Schema.String });
