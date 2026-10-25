@@ -6,6 +6,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Logger from "effect/Logger";
 import * as Runtime from "effect/Runtime";
+import * as Schema from "effect/Schema";
 import { CliError, Command } from "effect/cli";
 import { FetchHttpClient } from "effect/http";
 import * as Browser from "./browser.ts";
@@ -23,8 +24,18 @@ const MainLive = Layer.mergeAll(
   Paper.layer,
 ).pipe(Layer.provideMerge(NodeServices.layer), Layer.provideMerge(LoggerLive));
 
-// One readable line per failure; parse errors and help are rendered by the CLI itself.
-Command.run(Cli.command, { version: "0.1.5" }).pipe(
+const args = process.argv.slice(2);
+
+const cli = Command.runWith(Cli.command, { version: "0.1.6" });
+
+cli(args).pipe(
+  // A bare `paper-snapshot` with no browser to attach to is usually a first try: show the help,
+  // then the reason it couldn't attach.
+  Effect.catchIf(
+    (error) => args.length === 0 && Schema.is(Browser.BrowserError)(error),
+    (error) => cli(["--help"]).pipe(Effect.andThen(Effect.fail(error))),
+  ),
+  // One readable line per failure; parse errors and help are rendered by the CLI itself.
   Effect.tapError((error) =>
     CliError.isCliError(error) ? Effect.void : Console.error(`paper-snapshot: ${error.message}`),
   ),

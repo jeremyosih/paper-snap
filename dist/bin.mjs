@@ -2448,7 +2448,7 @@ const effectVariance = {
 /** @internal */
 const identifier = `${EffectTypeId}/identifier`;
 /** @internal */
-const args = `${EffectTypeId}/args`;
+const args$1 = `${EffectTypeId}/args`;
 /** @internal */
 const evaluate = `${EffectTypeId}/evaluate`;
 /** @internal */
@@ -2488,7 +2488,7 @@ const EffectProto = {
 		return {
 			_id: "Effect",
 			op: this[identifier],
-			...args in this ? { args: this[args] } : void 0
+			...args$1 in this ? { args: this[args$1] } : void 0
 		};
 	}
 };
@@ -2680,7 +2680,7 @@ const makePrimitiveProto = (options) => ({
 const makePrimitive$1 = (options) => {
 	const Proto = makePrimitiveProto(options);
 	const PrimitiveImpl = function(value) {
-		this[args] = value;
+		this[args$1] = value;
 	};
 	PrimitiveImpl.prototype = Proto;
 	return function(value) {
@@ -2693,28 +2693,28 @@ const makeExit = (options) => {
 		[ExitTypeId]: ExitTypeId,
 		_tag: options.op,
 		get [options.prop]() {
-			return this[args];
+			return this[args$1];
 		},
 		...makePrimitiveProto(options),
 		toString() {
-			return `${options.op}(${format$2(this[args])})`;
+			return `${options.op}(${format$2(this[args$1])})`;
 		},
 		toJSON() {
 			return {
 				_id: "Exit",
 				_tag: options.op,
-				[options.prop]: this[args]
+				[options.prop]: this[args$1]
 			};
 		},
 		[symbol](that) {
-			return isExit(that) && that._tag === this._tag && equals$1(this[args], that[args]);
+			return isExit(that) && that._tag === this._tag && equals$1(this[args$1], that[args$1]);
 		},
 		[symbol$1]() {
-			return combine$1(string$2(options.op), hash(this[args]));
+			return combine$1(string$2(options.op), hash(this[args$1]));
 		}
 	};
 	const ExitPrimitive = function(value) {
-		this[args] = value;
+		this[args$1] = value;
 	};
 	ExitPrimitive.prototype = Proto;
 	return function(value) {
@@ -2727,7 +2727,7 @@ const exitSucceed = /*#__PURE__*/ makeExit({
 	prop: "value",
 	[evaluate](fiber) {
 		const cont = fiber.getCont(contA);
-		return cont ? cont[contA](this[args], fiber, this) : fiber.yieldWith(this);
+		return cont ? cont[contA](this[args$1], fiber, this) : fiber.yieldWith(this);
 	}
 });
 /** @internal */
@@ -2739,7 +2739,7 @@ const exitFailCause = /*#__PURE__*/ makeExit({
 	op: "Failure",
 	prop: "cause",
 	[evaluate](fiber) {
-		let cause = this[args];
+		let cause = this[args$1];
 		let annotated = false;
 		if (fiber.cache.stackFrame) {
 			cause = causeAnnotate(cause, { mapUnsafe: /* @__PURE__ */ new Map([[StackTraceKey.key, fiber.cache.stackFrame]]) });
@@ -2768,7 +2768,7 @@ const exitDie = (defect) => exitFailCause(causeDie(defect));
 const withFiber$1 = /*#__PURE__*/ makePrimitive$1({
 	op: "WithFiber",
 	[evaluate](fiber) {
-		return this[args](fiber);
+		return this[args$1](fiber);
 	}
 });
 /** @internal */
@@ -7438,7 +7438,7 @@ const fail$6 = exitFail;
 const sync$1 = /*#__PURE__*/ makePrimitive$1({
 	op: "Sync",
 	[evaluate](fiber) {
-		const value = this[args]();
+		const value = this[args$1]();
 		const cont = fiber.getCont(contA);
 		return cont ? cont[contA](value, fiber) : fiber.yieldWith(exitSucceed(value));
 	}
@@ -7447,7 +7447,7 @@ const sync$1 = /*#__PURE__*/ makePrimitive$1({
 const suspend$3 = /*#__PURE__*/ makePrimitive$1({
 	op: "Suspend",
 	[evaluate](_fiber) {
-		return this[args]();
+		return this[args$1]();
 	}
 });
 /** @internal */
@@ -7463,7 +7463,7 @@ const yieldNow = /*#__PURE__*/ (/* @__PURE__ */ makePrimitive$1({
 		fiber.currentDispatcher.scheduleTask(() => {
 			if (resumed) return;
 			fiber.evaluate(exitVoid);
-		}, this[args] ?? 0);
+		}, this[args$1] ?? 0);
 		return fiber.yieldWith(() => {
 			resumed = true;
 		});
@@ -7557,7 +7557,7 @@ const asyncFinalizer = /*#__PURE__*/ makePrimitive$1({
 		}
 	},
 	[contE](cause, _fiber) {
-		return hasInterrupts$1(cause) ? flatMap$2(combineFinalizerCause(exitFailCause(cause), this[args]()), () => failCause$3(cause)) : failCause$3(cause);
+		return hasInterrupts$1(cause) ? flatMap$2(combineFinalizerCause(exitFailCause(cause), this[args$1]()), () => failCause$3(cause)) : failCause$3(cause);
 	}
 });
 /** @internal */
@@ -7699,14 +7699,14 @@ const fromIteratorUnsafe = /*#__PURE__*/ function() {
 const as$1 = /*#__PURE__*/ dual(2, (self, value) => new ContImpl(self, returnPayload, succeed$5(value)));
 const evaluateCont = function(fiber) {
 	fiber._stack.push(this);
-	return this[args];
+	return this[args$1];
 };
 const OnSuccessProto = /*#__PURE__*/ makePrimitiveProto({
 	op: "OnSuccess",
 	[evaluate]: evaluateCont
 });
 const ContImpl = function(self, cont, payload) {
-	this[args] = self;
+	this[args$1] = self;
 	this[contA] = cont;
 	this.payload = payload;
 };
@@ -7874,7 +7874,7 @@ const OnFailureProto = /*#__PURE__*/ makePrimitiveProto({
 	[evaluate]: evaluateCont
 });
 const OnFailureImpl = function(self, f) {
-	this[args] = self;
+	this[args$1] = self;
 	this[contE] = f;
 };
 OnFailureImpl.prototype = OnFailureProto;
@@ -7898,7 +7898,7 @@ const tapError$1 = /*#__PURE__*/ dual(2, (self, f) => tapCauseFilter(self, findE
 /** @internal */
 const tapDefect$1 = /*#__PURE__*/ dual(2, (self, f) => tapCauseFilter(self, findDefect, (_) => f(_)));
 /** @internal */
-const catchIf = /*#__PURE__*/ dual((args) => isEffect$1(args[0]), (self, predicate, f, orElse) => catchCause$1(self, (cause) => {
+const catchIf$1 = /*#__PURE__*/ dual((args) => isEffect$1(args[0]), (self, predicate, f, orElse) => catchCause$1(self, (cause) => {
 	const error = findRecoverableError(cause);
 	if (isFailure$1(error)) return failCause$3(error.failure);
 	if (!predicate(error.success)) return orElse ? orElse(error.success) : failCause$3(cause);
@@ -7915,7 +7915,7 @@ const catchFilter$1 = /*#__PURE__*/ dual((args) => isEffect$1(args[0]), (self, f
 /** @internal */
 const catchTag$1 = /*#__PURE__*/ dual((args) => isEffect$1(args[0]), (self, k, f, orElse) => {
 	const pred = Array.isArray(k) ? (e) => hasProperty(e, "_tag") && k.includes(e._tag) : isTagged(k);
-	return catchIf(self, pred, f, orElse);
+	return catchIf$1(self, pred, f, orElse);
 });
 /** @internal */
 const catchTags$1 = /*#__PURE__*/ dual((args) => isEffect$1(args[0]), (self, cases, orElse) => {
@@ -7963,7 +7963,7 @@ const OnSuccessAndFailureProto = /*#__PURE__*/ makePrimitiveProto({
 	[evaluate]: evaluateCont
 });
 const OnSuccessAndFailureImpl = function(self, onSuccess, onFailure) {
-	this[args] = self;
+	this[args$1] = self;
 	this[contA] = onSuccess;
 	this[contE] = onFailure;
 };
@@ -7980,7 +7980,7 @@ const makeMatch = (op, onFailure) => {
 		[contE]: onFailure
 	});
 	const MatchImpl = function(self, handlers) {
-		this[args] = self;
+		this[args$1] = self;
 		this.payload = handlers;
 	};
 	MatchImpl.prototype = Proto;
@@ -8018,7 +8018,7 @@ const exitPrimitive = /*#__PURE__*/ makePrimitive$1({
 	op: "Exit",
 	[evaluate](fiber) {
 		fiber._stack.push(this);
-		return this[args];
+		return this[args$1];
 	},
 	[contA](value, fiber, exit) {
 		return fiber.succeedWith(exit ?? exitSucceed(value));
@@ -8297,7 +8297,7 @@ const uninterruptible$1 = (self) => withFiber$1((fiber) => {
 const setInterruptible = /*#__PURE__*/ makePrimitive$1({
 	op: "SetInterruptible",
 	[contAll](fiber) {
-		fiber.interruptible = this[args];
+		fiber.interruptible = this[args$1];
 		if (fiber._interruptedCause && fiber.interruptible) return () => failCause$3(fiber._interruptedCause);
 	}
 });
@@ -8342,17 +8342,17 @@ const all$1 = (arg, options) => {
 const whileLoop$1 = /*#__PURE__*/ makePrimitive$1({
 	op: "While",
 	[contA](value, fiber) {
-		this[args].step(value);
-		if (this[args].while()) {
+		this[args$1].step(value);
+		if (this[args$1].while()) {
 			fiber._stack.push(this);
-			return this[args].body();
+			return this[args$1].body();
 		}
 		return exitVoid;
 	},
 	[evaluate](fiber) {
-		if (this[args].while()) {
+		if (this[args$1].while()) {
 			fiber._stack.push(this);
-			return this[args].body();
+			return this[args$1].body();
 		}
 		return exitVoid;
 	}
@@ -12565,6 +12565,58 @@ const catchTags = catchTags$1;
 * @since 4.0.0
 */
 const catchCause = catchCause$1;
+/**
+* Recovers from specific errors using a `Predicate` or `Refinement`.
+*
+* **When to use**
+*
+* Use when you need to recover from errors that match a condition.
+*
+* **Details**
+*
+* Use a `Refinement` for type narrowing or a `Predicate` for simple boolean
+* matching. Non-matching errors re-fail with the original cause. Defects and
+* interrupts are not caught.
+*
+* **Gotchas**
+*
+* If the cause contains a defect, the handler is skipped and every typed error
+* is converted to a defect, preserving reason order and interrupts. An
+* interruption alongside a typed error does not prevent recovery.
+*
+* **Example** (Recovering when a predicate matches)
+*
+* ```ts import.meta.vitest
+* import { Data, Effect, Filter } from "effect"
+*
+* class NotFound extends Data.TaggedError("NotFound")<{ id: string }> {}
+*
+* const program = Effect.fail(new NotFound({ id: "user-1" }))
+*
+* // With a refinement
+* const recovered = program.pipe(
+*   Effect.catchIf(
+*     (error): error is NotFound => error._tag === "NotFound",
+*     (error) => Effect.succeed(`missing:${error.id}`)
+*   )
+* )
+*
+* // With a Filter
+* const recovered2 = program.pipe(
+*   Effect.catchFilter(
+*     Filter.tagged("NotFound"),
+*     (error) => Effect.succeed(`missing:${error.id}`)
+*   )
+* )
+*
+* Effect.runSync(Effect.all([recovered, recovered2])) // => ['missing:user-1', 'missing:user-1']
+* ```
+*
+* @stability stable
+* @category error handling
+* @since 2.0.0
+*/
+const catchIf = catchIf$1;
 /**
 * Recovers from specific errors using a `Filter`.
 *
@@ -16876,7 +16928,7 @@ const takeBetweenUnsafe = (self, min, max) => {
 const suspendTake = /*#__PURE__*/ makePrimitive$1({
 	op: "QueueTake",
 	[evaluate](fiber) {
-		const effect = this[args]();
+		const effect = this[args$1]();
 		return isExit(effect) ? effect[evaluate](fiber) : effect;
 	}
 });
@@ -18627,7 +18679,7 @@ const ensuring = /*#__PURE__*/ dual(2, (self, finalizer) => fromChannel(ensuring
 * @category destructors
 * @since 2.0.0
 */
-const run$5 = /*#__PURE__*/ dual(2, (self, sink) => scopedWith((scope) => toPullScoped(self.channel, scope).pipe(flatMap$1((upstream) => sink.transform(upstream, scope)), map$3(([a]) => a))));
+const run$4 = /*#__PURE__*/ dual(2, (self, sink) => scopedWith((scope) => toPullScoped(self.channel, scope).pipe(flatMap$1((upstream) => sink.transform(upstream, scope)), map$3(([a]) => a))));
 /**
 * Runs the stream and collects all elements into an array.
 *
@@ -20982,7 +21034,7 @@ const Arrays = class extends ASTNodeImpl {
 /** @internal */
 function stepArray(s, item, exit, i) {
 	if (exit._tag === "Failure") return wrapPropertyKeyIssue(s, s.ast, i, exit);
-	const value = exit === sameExit ? item : exit[args];
+	const value = exit === sameExit ? item : exit[args$1];
 	if (value !== missing) s.output[i] = value;
 	else {
 		const p = s.getParser(s.tailThreshold, i);
@@ -21142,7 +21194,7 @@ const Objects = class extends ASTNodeImpl {
 			const expectedKeys = new Set(ast.propertySignatures.map((ps) => typeof ps.name === "number" ? globalThis.String(ps.name) : ps.name));
 			const finishIndex = (s, key, k2, inputValue, exitValue) => {
 				if (exitValue._tag === "Failure") return wrapPropertyKeyIssue(s, ast, key, exitValue) ?? void_$1;
-				const value = exitValue === sameExit ? inputValue : exitValue[args];
+				const value = exitValue === sameExit ? inputValue : exitValue[args$1];
 				if (k2 !== missing && value !== missing) {
 					if (hasProperties && (expectedKeys.has(key) || expectedKeys.has(typeof k2 === "number" ? globalThis.String(k2) : k2))) return void_$1;
 					assignProperty(s.out, k2, value);
@@ -21156,7 +21208,7 @@ const Objects = class extends ASTNodeImpl {
 					exitKey = eff;
 				}
 				if (exitKey._tag === "Failure") return wrapPropertyKeyIssue(s, ast, key, exitKey) ?? void_$1;
-				const k2 = exitKey === sameExit ? key : exitKey[args];
+				const k2 = exitKey === sameExit ? key : exitKey[args$1];
 				const inputValue = s.input[key];
 				const result = index.parserValue(inputValue, s.options);
 				return effectIsExit(result) ? finishIndex(s, key, k2, inputValue, result) : flatMap$1(exit(result), (exit) => finishIndex(s, key, k2, inputValue, exit));
@@ -21313,7 +21365,7 @@ const Objects = class extends ASTNodeImpl {
 function stepProperty(s, p, exit) {
 	if (exit._tag === "Failure") return wrapPropertyKeyIssue(s, s.ast, p.name, exit);
 	if (exit === sameExit) return;
-	const value = exit[args];
+	const value = exit[args$1];
 	if (value !== missing) {
 		assignProperty(s.out, p.name, value);
 		return;
@@ -23069,7 +23121,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 							onError: (error) => toPlatformError(`fromWritable(fd${fd})`, toError(error), command)
 						});
 					}
-					if (config.stream) yield* forkScoped(run$5(config.stream, sink));
+					if (config.stream) yield* forkScoped(run$4(config.stream, sink));
 					inputSinks.set(fd, sink);
 					break;
 				}
@@ -23106,7 +23158,7 @@ const layer$16 = /*#__PURE__*/ effect(ChildProcessSpawner, /* @__PURE__ */ gen(f
 				encoding: config.encoding
 			});
 		}
-		if (isStream(config.stream)) return as(forkScoped(run$5(config.stream, sink)), sink);
+		if (isStream(config.stream)) return as(forkScoped(run$4(config.stream, sink)), sink);
 		return succeed$2(sink);
 	});
 	const setupChildOutputStreams = (command, childProcess, stdoutConfig, stderrConfig) => {
@@ -25108,7 +25160,7 @@ function withDefault$3(ast, parser) {
 		if (input !== missing && input !== void 0) return parser(input, options);
 		const result = defaultValue;
 		if (effectIsExit(result) && result._tag === "Success") {
-			const local = parser(result[args], options);
+			const local = parser(result[args$1], options);
 			return local === sameExit ? result : local;
 		}
 		return flatMapEager(wrapEncoding(ast, input, options, result), (value) => {
@@ -25139,7 +25191,7 @@ function compile(ast, compile, compileField, base, specialize) {
 			if (encodingChecks && !options.disableChecks) {
 				if (effectIsExit(result)) {
 					if (result._tag === "Success") {
-						const output = result === sameExit ? input : result[args];
+						const output = result === sameExit ? input : result[args$1];
 						if (input !== missing && output !== missing) {
 							const issues = collectIssues(encodingChecks, input, void 0, ast, options);
 							if (issues) result = fail$3(new Composite(ast, issues, input, options));
@@ -25156,7 +25208,7 @@ function compile(ast, compile, compileField, base, specialize) {
 			if (checks && !options.disableChecks) {
 				if (effectIsExit(result)) {
 					if (result._tag === "Success") {
-						const value = result === sameExit ? input : result[args];
+						const value = result === sameExit ? input : result[args$1];
 						if (value === missing) return result;
 						const issues = collectIssues(checks, value, void 0, ast, options);
 						if (issues) result = fail$3(new Composite(ast, issues, value, options));
@@ -25185,7 +25237,7 @@ function compile(ast, compile, compileField, base, specialize) {
 			if (i !== 0) {
 				const next = parsers[i - 1];
 				if (result._tag === "Success") {
-					current = result[args];
+					current = result[args$1];
 					result = next(current, options);
 				} else result = flatMapEager(result, (value) => {
 					const nextResult = next(value, options);
@@ -25194,7 +25246,7 @@ function compile(ast, compile, compileField, base, specialize) {
 			}
 		}
 		if (result._tag === "Success") {
-			const value = result[args];
+			const value = result[args$1];
 			const local = parseLocal(value, options);
 			return local === sameExit ? result : local;
 		}
@@ -25365,7 +25417,7 @@ function is$1(schema) {
 }
 function makeIs(ast) {
 	{
-		const parser = asExit(run$4(ast));
+		const parser = asExit(run$3(ast));
 		return (input) => {
 			const exit = parser(input, defaultParseOptions);
 			if (isSuccess(exit)) return true;
@@ -25408,7 +25460,7 @@ function _is(ast) {
 * @since 4.0.0
 */
 function decodeUnknownEffect$1(schema, options) {
-	const parser = run$4(schema.ast);
+	const parser = run$3(schema.ast);
 	return options === void 0 ? parser : (input, overrideOptions) => parser(input, mergeParseOptions(options, overrideOptions));
 }
 /** @internal */
@@ -25440,7 +25492,7 @@ const decodeOption$1 = decodeUnknownOption;
 * @since 4.0.0
 */
 function encodeUnknownEffect$1(schema, options) {
-	const parser = run$4(flip(schema.ast));
+	const parser = run$3(flip(schema.ast));
 	return options === void 0 ? parser : (input, overrideOptions) => parser(input, mergeParseOptions(options, overrideOptions));
 }
 const mergeParseOptions = (options, overrideOptions) => overrideOptions ? {
@@ -25452,13 +25504,13 @@ const getValue = (value) => {
 	return succeed$2(value);
 };
 /** @internal */
-function run$4(ast) {
+function run$3(ast) {
 	return runWithCompiler(normalCompiler, ast);
 }
 function parserResult(result, input) {
 	if (result === sameExit) return succeed$2(input);
 	if (!effectIsExit(result)) return flatMapEager(result, getValue);
-	return result[args] === missing ? getValue(missing) : result;
+	return result[args$1] === missing ? getValue(missing) : result;
 }
 function runWithCompiler(compiler, ast) {
 	let parser;
@@ -25466,7 +25518,7 @@ function runWithCompiler(compiler, ast) {
 		const result = (parser ??= compiler(ast))(input, options ?? defaultParseOptions);
 		if (result === sameExit) return succeed$2(input);
 		if (!effectIsExit(result)) return flatMapEager(result, getValue);
-		return result[args] === missing ? getValue(missing) : result;
+		return result[args$1] === missing ? getValue(missing) : result;
 	};
 }
 function asExit(parser) {
@@ -29500,7 +29552,7 @@ const Password = (options) => basePrompt(options, "password").pipe(map$1(make$14
 * @category running
 * @since 4.0.0
 */
-const run$3 = /*#__PURE__*/ fnUntraced(function* (self) {
+const run$2 = /*#__PURE__*/ fnUntraced(function* (self) {
 	const terminal = yield* Terminal;
 	const input = yield* cached$1(terminal.readInput);
 	return yield* runWithInput(self, terminal, input);
@@ -29591,7 +29643,7 @@ const proto = {
 	.../*#__PURE__*/ Prototype({
 		label: "Prompt",
 		evaluate() {
-			return run$3(this);
+			return run$2(this);
 		}
 	}),
 	[TypeId$9]: { _Output: (_) => _ }
@@ -34551,7 +34603,7 @@ const scanCommandLevel = (tokens, context) => {
 };
 //#endregion
 //#region node_modules/effect/dist/cli/internal/wizard.js
-const run$2 = /*#__PURE__*/ fnUntraced(function* (command, options) {
+const run$1 = /*#__PURE__*/ fnUntraced(function* (command, options) {
 	const commandPath = options?.commandPath ?? [command.name];
 	const selected = getCommandAtPath(command, commandPath);
 	const commandLine = (options?.prefix ?? commandPath).map((value) => commandLineArg(value));
@@ -34587,7 +34639,7 @@ const promptCommand = /*#__PURE__*/ fnUntraced(function* (command, commandLine, 
 		if (visibleSubcommands.length > 0) yield* logCurrentCommand(commandLine, colors);
 	}
 	if (visibleSubcommands.length === 0) return;
-	const child = yield* run$3(Select({
+	const child = yield* run$2(Select({
 		message: "Command",
 		choices: visibleSubcommands.map((command) => ({
 			title: command.name,
@@ -34607,7 +34659,7 @@ const promptParam = /*#__PURE__*/ fnUntraced(function* (param) {
 	const single = getUnderlyingSingleOrThrow(param);
 	const metadata = getParamMetadata(param);
 	if (metadata.isOptional) {
-		if (!(yield* run$3(Confirm({
+		if (!(yield* run$2(Confirm({
 			message: `Set ${renderParamLabel(single)}?`,
 			initial: false
 		})))) {
@@ -34615,7 +34667,7 @@ const promptParam = /*#__PURE__*/ fnUntraced(function* (param) {
 			return [];
 		}
 	}
-	const count = !metadata.isVariadic ? 1 : yield* run$3(Int$2({
+	const count = !metadata.isVariadic ? 1 : yield* run$2(Int$2({
 		message: `${renderParamLabel(single)} count`,
 		default: getOrElse(metadata.variadicMin, () => 0),
 		min: getOrElse(metadata.variadicMin, () => 0),
@@ -34638,7 +34690,7 @@ const promptParam = /*#__PURE__*/ fnUntraced(function* (param) {
 const promptSingle = (single) => {
 	const message = renderParamMessage(single);
 	switch (single.primitiveType._tag) {
-		case "Boolean": return map$3(run$3(Confirm({
+		case "Boolean": return map$3(run$2(Confirm({
 			message,
 			label: {
 				confirm: "true",
@@ -34651,7 +34703,7 @@ const promptSingle = (single) => {
 		})), (value) => commandLineArg(String(value)));
 		case "Choice": {
 			const choices = getChoiceKeys(single.primitiveType) ?? [];
-			return map$3(run$3(Select({
+			return map$3(run$2(Select({
 				message,
 				choices: choices.map((choice) => ({
 					title: choice,
@@ -34659,11 +34711,11 @@ const promptSingle = (single) => {
 				}))
 			})), commandLineArg);
 		}
-		case "Date": return map$3(run$3(Date$1({ message })), (date) => commandLineArg(date.toISOString()));
-		case "Finite": return map$3(run$3(Number$1({ message })), (value) => commandLineArg(String(value)));
-		case "Int": return map$3(run$3(Int$2({ message })), (value) => commandLineArg(String(value)));
-		case "Redacted": return map$3(run$3(Password({ message })), (value) => commandLineArg(value$2(value), "<redacted>"));
-		default: return map$3(run$3(String$4({ message })), commandLineArg);
+		case "Date": return map$3(run$2(Date$1({ message })), (date) => commandLineArg(date.toISOString()));
+		case "Finite": return map$3(run$2(Number$1({ message })), (value) => commandLineArg(String(value)));
+		case "Int": return map$3(run$2(Int$2({ message })), (value) => commandLineArg(String(value)));
+		case "Redacted": return map$3(run$2(Password({ message })), (value) => commandLineArg(value$2(value), "<redacted>"));
+		default: return map$3(run$2(String$4({ message })), commandLineArg);
 	}
 };
 const commandLineArg = (value, displayValue = value) => ({
@@ -34959,69 +35011,6 @@ const showUserError = (error) => gen(function* () {
 	error[errorReported] = false;
 });
 /**
-* Runs a command using the arguments supplied by the `Stdio` service.
-*
-* **When to use**
-*
-* Use when command-line arguments should come from `Stdio` at the application
-* entry point.
-*
-* Help documents are always rendered. By default, parse error details and
-* `CliError.UserError` failures are also rendered with the installed
-* `CliOutput.Formatter` before the error is rethrown. Set `renderErrors` to
-* `false` when the host application owns error rendering.
-*
-* **Example** (Running commands with standard input)
-*
-* ```ts import.meta.vitest
-* import { Effect, FileSystem, Layer, Path, Stdio, Terminal } from "effect"
-* import { Command, Flag } from "effect/cli"
-* import { ChildProcessSpawner } from "effect/process"
-*
-* const CliTestLayer = Layer.mergeAll(
-*   FileSystem.layerNoop({}),
-*   Path.layer,
-*   Stdio.layerTest({
-*     args: Effect.succeed(["--name", "Alice"])
-*   }),
-*   Layer.succeed(Terminal.Terminal, Terminal.make({
-*     columns: Effect.succeed(80),
-*     rows: Effect.succeed(24),
-*     readInput: Effect.die("unused"),
-*     readLine: Effect.die("unused"),
-*     display: () => Effect.void
-*   })),
-*   Layer.succeed(
-*     ChildProcessSpawner.ChildProcessSpawner,
-*     ChildProcessSpawner.make(() => Effect.die("unused"))
-*   )
-* )
-*
-* const output: Array<string> = []
-* const greetCommand = Command.make("greet", {
-*   name: Flag.String("name")
-* }, (config) =>
-*   Effect.gen(function*() {
-*     yield* Effect.sync(() => output.push(`Hello, ${config.name}!`))
-*   }))
-*
-* // Automatically gets args from the Stdio service
-* const program = Command.run(greetCommand, {
-*   version: "1.0.0"
-* })
-*
-* await Effect.runPromise(program.pipe(Effect.provide(CliTestLayer)))
-* output // => ["Hello, Alice!"]
-* ```
-*
-* @see {@link runWith} for running a command with an explicit argument array
-*
-* @stability unstable
-* @category running
-* @since 4.0.0
-*/
-const run$1 = /*#__PURE__*/ dual(2, (command, config) => Stdio.use(({ args }) => flatMap$1(args, (args) => runWith(command, config)(args))));
-/**
 * Runs a command with explicitly provided arguments instead of using arguments from `Stdio`.
 *
 * **When to use**
@@ -35133,12 +35122,12 @@ const runWith = (command, config) => {
 				return yield* gen(function* () {
 					yield* log(renderIntroduction(command.name, config.version, command.description, colors));
 					const prefix = [command.name, ...args.filter((arg) => arg !== "--wizard" && !arg.startsWith("--wizard="))];
-					const wizardResult = yield* run$2(command, {
+					const wizardResult = yield* run$1(command, {
 						commandPath,
 						prefix
 					});
 					yield* log(renderCompletion(wizardResult.displayArgs, colors));
-					if (yield* run$3(Toggle({
+					if (yield* run$2(Toggle({
 						message: "Run this command?",
 						initial: true,
 						active: "yes",
@@ -54613,7 +54602,7 @@ const NodeInfo = fromJsonString(Struct({
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snapshot",
-		version: "0.1.5"
+		version: "0.1.6"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -55287,7 +55276,9 @@ const LoggerLive = layer$4([make$6((options) => {
 	process.stderr.write(`${mark} ${text}\n`);
 })]);
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.1.5" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
+const args = process.argv.slice(2);
+const cli = runWith(command, { version: "0.1.6" });
+cli(args).pipe(catchIf((error) => args.length === 0 && is(BrowserError)(error), (error) => cli(["--help"]).pipe(andThen(fail$3(error)))), tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);
