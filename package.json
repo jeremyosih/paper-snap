@@ -1,7 +1,7 @@
 {
   "name": "paper-snapshot",
   "version": "0.4.1",
-  "description": "Put your real site into Paper as editable layers, from the command line. No more screenshots.",
+  "description": "Paper Snapshot as a CLI. Copy and paste your real site directly into Paper as editable layers. No more screenshots.",
   "keywords": [
     "ai-agents",
     "claude-code",

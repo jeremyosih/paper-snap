@@ -1,6 +1,6 @@
 # paper-snapshot
 
-Put your real site into Paper as editable layers, from the command line. No more screenshots.
+Paper Snapshot as a CLI. Copy and paste your real site directly into Paper as editable layers. No more screenshots.
 
 Give paper-snapshot a URL, a local dev server, or a tab an agent already clicked its way to. It
 loads the page, captures it (or a single element) with [Paper Snapshot](https://paper.design/snapshot-extension)'s
