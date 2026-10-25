@@ -15,6 +15,14 @@ paper-snapshot needs Node 22 or later, the [Paper](https://paper.design/download
 (for pushing into a file), and a Chromium-based browser. An installed Chrome, Edge, Brave or
 Chromium is found automatically; with none, a headless Chromium is downloaded once.
 
+Run it without installing anything:
+
+```sh
+npx -y github:jeremyosih/paper-snapshot https://linear.app
+```
+
+Or install the `paper-snapshot` command:
+
 ```sh
 npm install -g https://github.com/jeremyosih/paper-snapshot/tarball/main
 ```
