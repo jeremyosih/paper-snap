@@ -1,0 +1,64 @@
+{
+  "name": "paper-snap",
+  "version": "0.1.0",
+  "description": "Headless Paper Snapshot: snapshot any URL or local dev server into Paper as editable layers",
+  "keywords": [
+    "agent",
+    "cli",
+    "effect",
+    "paper",
+    "paper.design",
+    "playwright",
+    "snapshot"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremyosih/paper-snap.git"
+  },
+  "bin": {
+    "paper-snap": "./dist/bin.mjs"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "vp pack",
+    "dev": "bun src/bin.ts",
+    "check": "vp check && bun run typecheck && bun run knip",
+    "lint": "vp lint --report-unused-disable-directives",
+    "format": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "typecheck": "tsc --noEmit",
+    "knip": "knip",
+    "staged": "vp staged",
+    "hooks:setup": "vp config",
+    "prepare": "effect-tsgo patch && vp pack"
+  },
+  "dependencies": {
+    "@effect/platform-node": "4.0.0-rc.112",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "effect": "4.0.0-rc.112",
+    "fflate": "0.8.2",
+    "playwright-core": "1.64.1"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "0.41.0",
+    "@oxlint/plugins": "1.82.0",
+    "@types/node": "^26.2.0",
+    "knip": "6.34.0",
+    "oxlint": "1.82.0",
+    "typescript": "7.0.2",
+    "vite-plus": "0.3.1"
+  },
+  "overrides": {
+    "@effect/platform-node-shared": "4.0.0-rc.112",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "bun@1.4.2"
+}

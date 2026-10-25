@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "project": ["src/**/*.ts!", "*.ts"],
+  // Oxlint is pinned for Vite+'s dynamically loaded anti-slop plugins.
+  "ignoreDependencies": ["oxlint", "@effect/language-service"],
+}
