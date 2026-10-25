@@ -142,29 +142,45 @@ const apply = (base: Job, entry: Entry): Job => ({
   replace: override(entry.replace, base.replace),
 });
 
-/** Paths like `/pricing` resolve against the base URL (or the first absolute URL in the run). */
+const localHost =
+  /^(?:localhost|[^/:]+\.(?:localhost|local|test)|127\.\d+\.\d+\.\d+|0\.0\.0\.0|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|\[::1\])(?::\d+)?(?:[/?#]|$)/i;
+
+const isPath = (url: string) => url.startsWith("/") || url.startsWith(".");
+
+/** `localhost:3000` and `example.com/pricing` get a scheme: http for local hosts, https otherwise. */
+const withScheme = (url: string) =>
+  isPath(url) || /^[a-z][a-z\d+.-]*:\/\//i.test(url) || /^(?:about|data|file):/i.test(url)
+    ? url
+    : `${localHost.test(url) ? "http" : "https"}://${url}`;
+
+/** Paths like `/pricing` resolve against the base URL (or the first full URL in the run). */
 const resolveUrls = (jobs: ReadonlyArray<Job>, baseUrl: Option.Option<string>) =>
   Effect.gen(function* () {
-    const base = Option.orElse(baseUrl, () =>
+    const normalized = jobs.map((job) => ({ ...job, url: Option.map(job.url, withScheme) }));
+
+    const base = Option.orElse(Option.map(baseUrl, withScheme), () =>
       Option.fromNullishOr(
-        jobs.flatMap((job) => Option.toArray(job.url)).find((url) => URL.canParse(url)),
+        normalized.flatMap((job) => Option.toArray(job.url)).find((url) => !isPath(url)),
       ),
     );
 
-    return yield* Effect.forEach(jobs, (job) => {
-      if (Option.isNone(job.url) || URL.canParse(job.url.value)) return Effect.succeed(job);
+    return yield* Effect.forEach(normalized, (job) => {
+      if (Option.isNone(job.url) || !isPath(job.url.value)) return Effect.succeed(job);
 
       const relative = job.url.value;
 
-      return Option.match(base, {
+      const resolved = Option.flatMap(base, (origin) =>
+        Option.fromNullishOr(URL.parse(relative, origin)?.href),
+      );
+
+      return Option.match(resolved, {
         onNone: () =>
           Effect.fail(
             new ManifestError({
-              message: `"${relative}" is not a full URL; pass --base-url or start with an absolute URL`,
+              message: `"${relative}" is a path; start with a full URL or pass --base-url`,
             }),
           ),
-        onSome: (origin) =>
-          Effect.succeed({ ...job, url: Option.some(new URL(relative, origin).href) }),
+        onSome: (url) => Effect.succeed({ ...job, url: Option.some(url) }),
       });
     });
   });

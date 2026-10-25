@@ -26,9 +26,15 @@ const MainLive = Layer.mergeAll(
 ).pipe(Layer.provideMerge(NodeServices.layer), Layer.provideMerge(LoggerLive));
 
 // One readable line per failure; parse errors and help are rendered by the CLI itself.
-Command.run(Cli.command, { version: "0.1.0" }).pipe(
+Command.run(Cli.command, { version: "0.1.1" }).pipe(
   Effect.tapError((error) =>
     CliError.isCliError(error) ? Effect.void : Console.error(`paper-snapshot: ${error.message}`),
+  ),
+  // Bugs surface as defects; report them instead of exiting silently.
+  Effect.tapDefect((defect) =>
+    Console.error(
+      `paper-snapshot: unexpected error: ${defect instanceof Error ? (defect.stack ?? defect.message) : String(defect)}`,
+    ),
   ),
   Effect.provide(MainLive),
   NodeRuntime.runMain({

@@ -6974,6 +6974,11 @@ const causeElectDefects = (self) => hasDies(self) && hasFails(self) ? causeFromR
 */
 const findRecoverableError = (self) => hasDies(self) ? fail$7(causeElectDefects(self)) : findError(self);
 /** @internal */
+const findDefect = (self) => {
+	const reason = self.reasons.find(isDieReason$1);
+	return reason ? succeed$6(reason.defect) : fail$7(self);
+};
+/** @internal */
 const hasInterrupts$1 = (self) => self.reasons.some(isInterruptReason);
 /** @internal */
 const causeFilterInterruptors = (self) => {
@@ -7890,6 +7895,8 @@ const tapCauseFilter = /*#__PURE__*/ dual(3, (self, filter, f) => catchCause$1(s
 }));
 /** @internal */
 const tapError$1 = /*#__PURE__*/ dual(2, (self, f) => tapCauseFilter(self, findError, (e) => f(e)));
+/** @internal */
+const tapDefect$1 = /*#__PURE__*/ dual(2, (self, f) => tapCauseFilter(self, findDefect, (_) => f(_)));
 /** @internal */
 const catchIf = /*#__PURE__*/ dual((args) => isEffect$1(args[0]), (self, predicate, f, orElse) => catchCause$1(self, (cause) => {
 	const error = findRecoverableError(cause);
@@ -12850,6 +12857,42 @@ const tapError = tapError$1;
 * @since 4.0.0
 */
 const tapCause = tapCause$1;
+/**
+* Runs an effectful operation when the source effect dies with a defect.
+*
+* **Details**
+*
+* Use this for diagnostics such as logging unexpected thrown exceptions or
+* values passed to `die`. Recoverable failures are not handled. When the
+* operation succeeds, the original defect is preserved; if the operation fails,
+* its error is also represented in the returned effect.
+*
+* **Example** (Observing defects)
+*
+* ```ts import.meta.vitest
+* import { Effect, Exit } from "effect"
+* const output: Array<unknown> = []
+*
+* // Simulate a severe failure in the system
+* const task2: Effect.Effect<number> = Effect.die(
+*   "Something went wrong"
+* )
+*
+* // Log the defect using tapDefect
+* const tapping2 = Effect.tapDefect(
+*   task2,
+*   (defect) => Effect.sync(() => { output.push(`defect: ${defect}`) })
+* )
+*
+* void output.push(Effect.runSyncExit(tapping2))
+* output // => ["defect: Something went wrong", Exit.die("Something went wrong")]
+* ```
+*
+* @stability stable
+* @category error handling
+* @since 2.0.0
+*/
+const tapDefect = tapDefect$1;
 /**
 * Discards both the success and failure values of an effect.
 *
@@ -38122,17 +38165,26 @@ const apply = (base, entry) => ({
 	rightOf: override(entry.rightOf, base.rightOf),
 	replace: override(entry.replace, base.replace)
 });
-/** Paths like `/pricing` resolve against the base URL (or the first absolute URL in the run). */
+const localHost = /^(?:localhost|[^/:]+\.(?:localhost|local|test)|127\.\d+\.\d+\.\d+|0\.0\.0\.0|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|\[::1\])(?::\d+)?(?:[/?#]|$)/i;
+const isPath = (url) => url.startsWith("/") || url.startsWith(".");
+/** `localhost:3000` and `example.com/pricing` get a scheme: http for local hosts, https otherwise. */
+const withScheme = (url) => isPath(url) || /^[a-z][a-z\d+.-]*:\/\//i.test(url) || /^(?:about|data|file):/i.test(url) ? url : `${localHost.test(url) ? "http" : "https"}://${url}`;
+/** Paths like `/pricing` resolve against the base URL (or the first full URL in the run). */
 const resolveUrls = (jobs, baseUrl) => gen(function* () {
-	const base = orElse$2(baseUrl, () => fromNullishOr(jobs.flatMap((job) => toArray(job.url)).find((url) => URL.canParse(url))));
-	return yield* forEach$1(jobs, (job) => {
-		if (isNone(job.url) || URL.canParse(job.url.value)) return succeed$2(job);
+	const normalized = jobs.map((job) => ({
+		...job,
+		url: map$9(job.url, withScheme)
+	}));
+	const base = orElse$2(map$9(baseUrl, withScheme), () => fromNullishOr(normalized.flatMap((job) => toArray(job.url)).find((url) => !isPath(url))));
+	return yield* forEach$1(normalized, (job) => {
+		if (isNone(job.url) || !isPath(job.url.value)) return succeed$2(job);
 		const relative = job.url.value;
-		return match$5(base, {
-			onNone: () => fail$3(new ManifestError({ message: `"${relative}" is not a full URL; pass --base-url or start with an absolute URL` })),
-			onSome: (origin) => succeed$2({
+		const resolved = flatMap$4(base, (origin) => fromNullishOr(URL.parse(relative, origin)?.href));
+		return match$5(resolved, {
+			onNone: () => fail$3(new ManifestError({ message: `"${relative}" is a path; start with a full URL or pass --base-url` })),
+			onSome: (url) => succeed$2({
 				...job,
-				url: some(new URL(relative, origin).href)
+				url: some(url)
 			})
 		});
 	});
@@ -54708,7 +54760,7 @@ const NodeInfo = fromJsonString(Struct({
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snapshot",
-		version: "0.1.0"
+		version: "0.1.1"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -55363,7 +55415,7 @@ const command = make$3("paper-snapshot", flags, run).pipe(withDescription("Snaps
 //#region src/bin.ts
 const LoggerLive = mergeAll(layer$4([consolePretty()]), succeed$3(LogToStderr, true));
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.1.0" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.1.1" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);
