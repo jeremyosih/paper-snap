@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: bun run setup
+      - run: bun run check
+      - name: dist/ is built from this source
+        run: |
+          bun run build
+          git diff --exit-code -- dist || (echo "::error::dist/ is stale: run bun run build and commit it" && exit 1)
+      - name: CLI starts
+        run: node dist/bin.mjs --version

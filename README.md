@@ -165,7 +165,7 @@ instead.
 ## Development
 
 ```sh
-bun install && bun run setup   # dependencies, Effect diagnostics for TypeScript, git hooks
+bun install && bun run setup && bun run hooks:setup   # dependencies, Effect diagnostics, git hooks
 bun run check                  # oxfmt and oxlint with anti-slop (vite-plus), tsc with Effect diagnostics, knip
 bun run build                  # dist/bin.mjs, committed so installs from GitHub need no build
 bun run dev -- https://example.com --out -

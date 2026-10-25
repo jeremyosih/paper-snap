@@ -28,6 +28,10 @@
     "skills"
   ],
   "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "vp pack",
     "dev": "bun src/bin.ts",
@@ -39,7 +43,7 @@
     "knip": "knip",
     "staged": "vp staged",
     "hooks:setup": "vp config",
-    "setup": "effect-tsgo patch && vp config"
+    "setup": "effect-tsgo patch"
   },
   "dependencies": {
     "playwright-core": "1.64.1"
