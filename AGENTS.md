@@ -14,4 +14,4 @@ After cloning, run `bun install && bun run setup && bun run hooks:setup` (patche
 
 Releases: bump `version` in package.json and the version strings in `src/bin.ts` and `src/paper.ts`, rebuild and commit `dist/`, then push a `v<version>` tag. `.github/workflows/release.yml` checks, publishes to npm with provenance through trusted publishing, and creates the GitHub release.
 
-Run `bun run check` after changes: formatting, anti-slop lint, TypeScript with Effect diagnostics, and Knip. `dist/bin.mjs` is committed so `npm install -g https://github.com/jeremyosih/paper-snapshot/tarball/main` works without a build step: run `bun run build` and commit `dist/` with every source change. `bun run dev -- <args>` runs from source.
+Run `bun run check` after changes: formatting, anti-slop lint, TypeScript with Effect diagnostics, and Knip. `dist/bin.mjs` is committed so installs from GitHub work without a build step: run `bun run build` and commit `dist/` with every source change. The npm package is `paper-snapshot-cli`; its command is `paper-snapshot`. `bun run dev -- <args>` runs from source.

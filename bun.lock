@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "paper-snapshot",
+      "name": "paper-snapshot-cli",
       "dependencies": {
         "playwright-core": "1.64.1",
       },

@@ -37,7 +37,7 @@ Tell the user before running a command that waits on them, and name what they wi
 
 ## Gotchas
 
-- When `paper-snapshot` isn't on PATH, run it as `npx -y github:jeremyosih/paper-snapshot …` with the same arguments; the first run takes about 20 seconds.
+- When `paper-snapshot` isn't on PATH, run it as `npx -y paper-snapshot-cli …` with the same arguments.
 
 - The Paper app must be running: the push goes through its MCP relay at `~/.paper/bin/paper`. `--file-id` and `--page-id` target a specific file and page.
 - Snapshots run to several MB. Let paper-snapshot carry the HTML; `--out` writes it to disk (a directory for several captures).

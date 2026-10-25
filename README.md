@@ -18,13 +18,13 @@ Chromium is found automatically; with none, a headless Chromium is downloaded on
 Run it without installing anything:
 
 ```sh
-npx -y github:jeremyosih/paper-snapshot https://linear.app
+npx paper-snapshot-cli https://linear.app
 ```
 
 Or install the `paper-snapshot` command:
 
 ```sh
-npm install -g https://github.com/jeremyosih/paper-snapshot/tarball/main
+npm install -g paper-snapshot-cli
 ```
 
 The first run downloads the Paper Snapshot extension from the Chrome Web Store and caches it in

@@ -1,5 +1,5 @@
 {
-  "name": "paper-snapshot",
+  "name": "paper-snapshot-cli",
   "version": "0.4.1",
   "description": "Paper Snapshot as a CLI. Copy and paste your real site directly into Paper as editable layers. No more screenshots.",
   "keywords": [
