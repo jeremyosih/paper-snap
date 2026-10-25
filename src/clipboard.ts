@@ -2,15 +2,14 @@
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Schema from "effect/Schema";
-import * as ChildProcess from "effect/unstable/process/ChildProcess";
-import * as ChildProcessSpawner from "effect/unstable/process/ChildProcessSpawner";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
-export class ClipboardError extends Schema.TaggedError<ClipboardError>()(
-  "Clipboard.ClipboardError",
-  {
-    message: Schema.String,
-  },
-) {}
+export class ClipboardError extends Schema.TaggedError<
+  ClipboardError,
+  { readonly brand: unique symbol }
+>()("Clipboard.ClipboardError", {
+  message: Schema.String,
+}) {}
 
 /** JXA: read the file at argv[0] and publish it as HTML on the general pasteboard. */
 const script = `

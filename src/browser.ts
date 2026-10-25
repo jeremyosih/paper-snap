@@ -9,8 +9,7 @@ import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
-import * as ChildProcess from "effect/unstable/process/ChildProcess";
-import * as ChildProcessSpawner from "effect/unstable/process/ChildProcessSpawner";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { chromium } from "playwright-core";
 import type { Browser, BrowserContext, Page } from "playwright-core";
 
@@ -77,7 +76,10 @@ export interface Handle {
   ) => Effect.Effect<Session, BrowserError, Scope.Scope>;
 }
 
-export class BrowserError extends Schema.TaggedError<BrowserError>()("Browser.BrowserError", {
+export class BrowserError extends Schema.TaggedError<
+  BrowserError,
+  { readonly brand: unique symbol }
+>()("Browser.BrowserError", {
   message: Schema.String,
 }) {}
 

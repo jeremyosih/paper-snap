@@ -22,7 +22,10 @@ export interface Warnings {
   readonly lostColspans: number;
 }
 
-export class PrepareError extends Schema.TaggedError<PrepareError>()("Prepare.PrepareError", {
+export class PrepareError extends Schema.TaggedError<
+  PrepareError,
+  { readonly brand: unique symbol }
+>()("Prepare.PrepareError", {
   stage: Schema.String,
   message: Schema.String,
 }) {}

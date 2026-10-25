@@ -12,8 +12,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
-import * as HttpClient from "effect/unstable/http/HttpClient";
-import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
+import { HttpClient, HttpClientResponse } from "effect/http";
 import { unzipSync } from "fflate";
 import * as vm from "node:vm";
 
@@ -39,7 +38,10 @@ export interface Settings {
   readonly refresh: boolean;
 }
 
-class ExtensionError extends Schema.TaggedError<ExtensionError>()("Extension.ExtensionError", {
+class ExtensionError extends Schema.TaggedError<
+  ExtensionError,
+  { readonly brand: unique symbol }
+>()("Extension.ExtensionError", {
   message: Schema.String,
 }) {}
 

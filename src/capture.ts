@@ -62,10 +62,13 @@ interface Snapshot {
   readonly inlinedImages: number;
 }
 
-class CaptureError extends Schema.TaggedError<CaptureError>()("Capture.CaptureError", {
-  stage: Schema.String,
-  message: Schema.String,
-}) {}
+class CaptureError extends Schema.TaggedError<CaptureError, { readonly brand: unique symbol }>()(
+  "Capture.CaptureError",
+  {
+    stage: Schema.String,
+    message: Schema.String,
+  },
+) {}
 
 const CaptureResult = Schema.Union([
   Schema.Struct({ status: Schema.Literal("success"), html: Schema.String }),

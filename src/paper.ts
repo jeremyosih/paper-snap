@@ -53,10 +53,13 @@ interface Artboard {
   readonly replaced: boolean;
 }
 
-class PaperError extends Schema.TaggedError<PaperError>()("Paper.PaperError", {
-  tool: Schema.String,
-  message: Schema.String,
-}) {}
+class PaperError extends Schema.TaggedError<PaperError, { readonly brand: unique symbol }>()(
+  "Paper.PaperError",
+  {
+    tool: Schema.String,
+    message: Schema.String,
+  },
+) {}
 
 interface Connection {
   /**

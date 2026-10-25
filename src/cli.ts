@@ -10,9 +10,7 @@ import * as Path from "effect/Path";
 import * as References from "effect/References";
 import * as Schema from "effect/Schema";
 import * as Scope from "effect/Scope";
-import * as Argument from "effect/unstable/cli/Argument";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
+import { Argument, Command, Flag } from "effect/cli";
 import * as Browser from "./browser.ts";
 import * as Capture from "./capture.ts";
 import * as Clipboard from "./clipboard.ts";
@@ -21,22 +19,22 @@ import * as Job from "./job.ts";
 import * as Paper from "./paper.ts";
 
 const milliseconds = (name: string, fallback: number, description: string) =>
-  Flag.integer(name).pipe(Flag.withDescription(`${description} (ms)`), Flag.withDefault(fallback));
+  Flag.Int(name).pipe(Flag.withDescription(`${description} (ms)`), Flag.withDefault(fallback));
 
 const optionalString = (name: string, description: string) =>
-  Flag.string(name).pipe(Flag.withDescription(description), Flag.optional);
+  Flag.String(name).pipe(Flag.withDescription(description), Flag.optional);
 
 const optionalInteger = (name: string, description: string) =>
-  Flag.integer(name).pipe(Flag.withDescription(description), Flag.optional);
+  Flag.Int(name).pipe(Flag.withDescription(description), Flag.optional);
 
 const repeatable = (name: string, description: string) =>
-  Flag.string(name).pipe(Flag.withDescription(`${description} (repeatable)`), Flag.atLeast(0));
+  Flag.String(name).pipe(Flag.withDescription(`${description} (repeatable)`), Flag.atLeast(0));
 
 const toggle = (name: string, fallback: boolean, description: string) =>
-  Flag.boolean(name).pipe(Flag.withDescription(description), Flag.withDefault(fallback));
+  Flag.Boolean(name).pipe(Flag.withDescription(description), Flag.withDefault(fallback));
 
 const flags = {
-  urls: Argument.string("url").pipe(
+  urls: Argument.String("url").pipe(
     Argument.withDescription(
       "Pages to capture, one artboard each. Paths like /pricing resolve against the first URL or --base-url. Omit to capture the attached browser's current tab",
     ),
@@ -49,7 +47,7 @@ const flags = {
   baseUrl: optionalString("base-url", "Origin that relative URLs resolve against"),
 
   // Source browser
-  source: Flag.choice("source", [
+  source: Flag.Literals("source", [
     "auto",
     "launch",
     "chrome",
@@ -70,7 +68,7 @@ const flags = {
     "chrome-user-data-dir",
     "Chrome user data directory for --source chrome (default: the platform's Google Chrome profile root)",
   ),
-  playwriterEndpoint: Flag.string("playwriter-endpoint").pipe(
+  playwriterEndpoint: Flag.String("playwriter-endpoint").pipe(
     Flag.withDescription("Playwriter relay CDP endpoint"),
     Flag.withDefault("http://127.0.0.1:19988"),
   ),
@@ -78,16 +76,16 @@ const flags = {
     "tab",
     "Attached browsers: capture the tab whose URL or title contains this text (default: the visible tab)",
   ),
-  agentBrowserBin: Flag.string("agent-browser-bin").pipe(
+  agentBrowserBin: Flag.String("agent-browser-bin").pipe(
     Flag.withDescription("agent-browser executable"),
     Flag.withDefault("agent-browser"),
   ),
   agentBrowserSession: optionalString("agent-browser-session", "agent-browser session name"),
-  browser: Flag.string("browser").pipe(
+  browser: Flag.String("browser").pipe(
     Flag.withDescription(
       "Chromium-based executable to launch (default: installed Chrome/Edge/Brave/Chromium)",
     ),
-    Flag.withFallbackConfig(Config.string("PAPER_SNAPSHOT_BROWSER")),
+    Flag.withFallbackConfig(Config.String("PAPER_SNAPSHOT_BROWSER")),
     Flag.optional,
   ),
   browserArgs: repeatable("browser-arg", "Extra command-line argument for the launched browser"),
@@ -108,8 +106,11 @@ const flags = {
     "height",
     "Viewport height in px (default 900; attached tabs keep theirs). The capture always covers the selected element's full height; content inside internal scroll containers is unclipped by --full-page",
   ),
-  scale: Flag.float("scale").pipe(Flag.withDescription("Device scale factor"), Flag.withDefault(1)),
-  colorScheme: Flag.choice("color-scheme", ["light", "dark", "no-preference"]).pipe(
+  scale: Flag.Finite("scale").pipe(
+    Flag.withDescription("Device scale factor"),
+    Flag.withDefault(1),
+  ),
+  colorScheme: Flag.Literals("color-scheme", ["light", "dark", "no-preference"]).pipe(
     Flag.withDescription(
       "Emulates the prefers-color-scheme media query only. Apps that keep their theme in storage need --local-storage <key>=dark as well",
     ),
@@ -118,7 +119,7 @@ const flags = {
   userAgent: optionalString("user-agent", "User agent override"),
   locale: optionalString("locale", "Locale, e.g. fr-FR"),
   timezone: optionalString("timezone", "Time zone, e.g. Africa/Douala"),
-  headers: Flag.keyValuePair("header").pipe(
+  headers: Flag.KeyValuePair("header").pipe(
     Flag.withDescription("Extra request header as name=value (repeatable)"),
     Flag.withDefault({}),
   ),
@@ -128,13 +129,13 @@ const flags = {
   ),
 
   // Page state
-  localStorage: Flag.keyValuePair("local-storage").pipe(
+  localStorage: Flag.KeyValuePair("local-storage").pipe(
     Flag.withDescription(
       "localStorage entry set before the page's scripts run, as key=value (repeatable)",
     ),
     Flag.withDefault({}),
   ),
-  sessionStorage: Flag.keyValuePair("session-storage").pipe(
+  sessionStorage: Flag.KeyValuePair("session-storage").pipe(
     Flag.withDescription(
       "sessionStorage entry set before the page's scripts run, as key=value (repeatable)",
     ),
@@ -147,15 +148,17 @@ const flags = {
   clicks: repeatable("click", "Selector to click after load, in order"),
 
   // Page preparation
-  selector: Flag.string("selector").pipe(
+  selector: Flag.String("selector").pipe(
     Flag.withAlias("s"),
     Flag.withDescription("CSS selector of the element to capture"),
     Flag.withDefault("body"),
   ),
-  waitUntil: Flag.choice("wait-until", ["load", "domcontentloaded", "networkidle", "commit"]).pipe(
-    Flag.withDescription("Navigation milestone to wait for"),
-    Flag.withDefault("load"),
-  ),
+  waitUntil: Flag.Literals("wait-until", [
+    "load",
+    "domcontentloaded",
+    "networkidle",
+    "commit",
+  ]).pipe(Flag.withDescription("Navigation milestone to wait for"), Flag.withDefault("load")),
   navigationTimeout: milliseconds("navigation-timeout", 60_000, "Navigation timeout"),
   networkIdleTimeout: milliseconds(
     "network-idle-timeout",
@@ -173,7 +176,7 @@ const flags = {
   scroll: toggle("scroll", true, "Scroll through the page first so lazy content loads"),
   scrollStep: optionalInteger("scroll-step", "Scroll step in px (default 80% of the viewport)"),
   scrollDelay: milliseconds("scroll-delay", 120, "Pause between scroll steps"),
-  scrollMax: Flag.integer("scroll-max").pipe(
+  scrollMax: Flag.Int("scroll-max").pipe(
     Flag.withDescription("Stop auto-scrolling after this many px"),
     Flag.withDefault(50_000),
   ),
@@ -185,7 +188,7 @@ const flags = {
     true,
     "Grow the viewport until no internal scroll container (h-screen shells, overflow:auto mains) clips content",
   ),
-  fullPageMaxHeight: Flag.integer("full-page-max-height").pipe(
+  fullPageMaxHeight: Flag.Int("full-page-max-height").pipe(
     Flag.withDescription("Cap for the grown viewport in px"),
     Flag.withDefault(30_000),
   ),
@@ -204,7 +207,7 @@ const flags = {
     true,
     "Freeze rendered image heights so Paper keeps aspect ratios",
   ),
-  inlineImages: Flag.choice("inline-images", ["auto", "always", "never"]).pipe(
+  inlineImages: Flag.Literals("inline-images", ["auto", "always", "never"]).pipe(
     Flag.withDescription(
       "Embed images as data URIs. auto: only for localhost/private hosts Paper can't reach",
     ),
@@ -220,7 +223,7 @@ const flags = {
     "extension",
     "Paper Snapshot extension to use: .crx, .zip, unpacked directory, or .js",
   ),
-  extensionId: Flag.string("extension-id").pipe(
+  extensionId: Flag.String("extension-id").pipe(
     Flag.withDescription("Chrome Web Store id of Paper Snapshot"),
     Flag.withDefault(Extension.paperSnapshotId),
   ),
@@ -232,7 +235,7 @@ const flags = {
   cacheDir: optionalString("cache-dir", "Cache directory (default ~/.cache/paper-snapshot)"),
 
   // Outputs
-  push: Flag.boolean("push").pipe(
+  push: Flag.Boolean("push").pipe(
     Flag.withDescription(
       "Create artboards in Paper (default unless --out or --clipboard is given)",
     ),
@@ -267,17 +270,17 @@ const flags = {
     "replace",
     "Re-snapshot into this existing artboard id, keeping its id, position and name",
   ),
-  gap: Flag.integer("gap").pipe(
+  gap: Flag.Int("gap").pipe(
     Flag.withDescription("Space between artboards for --below, --right-of and --layout (px)"),
     Flag.withDefault(80),
   ),
-  layout: Flag.choice("layout", ["row", "column", "grid"]).pipe(
+  layout: Flag.Literals("layout", ["row", "column", "grid"]).pipe(
     Flag.withDescription(
       "How several captures are arranged, starting from the first one's position",
     ),
     Flag.withDefault("row"),
   ),
-  columns: Flag.integer("columns").pipe(
+  columns: Flag.Int("columns").pipe(
     Flag.withDescription("Columns for --layout grid"),
     Flag.withDefault(4),
   ),
@@ -292,13 +295,19 @@ const flags = {
 type Input = Command.Command.Config.Infer<typeof flags>;
 
 /** Captures in the run failed; each was already reported, so the run only summarizes. */
-class CapturesFailed extends Schema.TaggedError<CapturesFailed>()("Cli.CapturesFailed", {
+class CapturesFailed extends Schema.TaggedError<
+  CapturesFailed,
+  { readonly brand: unique symbol }
+>()("Cli.CapturesFailed", {
   message: Schema.String,
 }) {}
 
-class UsageError extends Schema.TaggedError<UsageError>()("Cli.UsageError", {
-  message: Schema.String,
-}) {}
+class UsageError extends Schema.TaggedError<UsageError, { readonly brand: unique symbol }>()(
+  "Cli.UsageError",
+  {
+    message: Schema.String,
+  },
+) {}
 
 const Warnings = Schema.Struct({
   emptySvgs: Schema.Finite,
@@ -522,9 +531,9 @@ const slug = (text: string) =>
 const handler = Effect.fn("paper-snapshot")(function* (input: Input) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const home = yield* Config.string("HOME").pipe(Config.withDefault("."));
-  const localAppData = yield* Config.string("LOCALAPPDATA").pipe(Config.withDefault(""));
-  const xdgCache = yield* Config.option(Config.string("XDG_CACHE_HOME"));
+  const home = yield* Config.String("HOME").pipe(Config.withDefault("."));
+  const localAppData = yield* Config.String("LOCALAPPDATA").pipe(Config.withDefault(""));
+  const xdgCache = yield* Config.option(Config.String("XDG_CACHE_HOME"));
 
   const scripts = [
     ...input.evals,

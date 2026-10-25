@@ -58,9 +58,12 @@ const Manifest = Schema.Union([
   }),
 ]);
 
-class ManifestError extends Schema.TaggedError<ManifestError>()("Job.ManifestError", {
-  message: Schema.String,
-}) {}
+class ManifestError extends Schema.TaggedError<ManifestError, { readonly brand: unique symbol }>()(
+  "Job.ManifestError",
+  {
+    message: Schema.String,
+  },
+) {}
 
 /** The resolved description of one capture. */
 export interface Job {
