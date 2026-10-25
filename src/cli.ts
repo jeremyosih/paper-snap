@@ -540,6 +540,19 @@ const target = (
   return Paper.Target.Create({ fileId: job.fileId, pageId: job.pageId, name, position });
 };
 
+/** "Title · host"; a page titled only with its host is named by its URL instead. */
+const defaultName = (title: string, url: string) => {
+  const parsed = URL.parse(url);
+
+  if (parsed === null) return title;
+
+  const path = parsed.pathname === "/" ? "" : parsed.pathname.replace(/\/$/, "");
+
+  return title === "" || title === parsed.host
+    ? `${parsed.host}${path}`
+    : `${title} · ${parsed.host}`;
+};
+
 const slug = (text: string) =>
   text
     .toLowerCase()
@@ -686,10 +699,7 @@ const handler = Effect.fn("paper-snapshot")(function* (input: Input) {
     ).pipe(
       Effect.flatMap((snapshot) =>
         Effect.gen(function* () {
-          const name = Option.getOrElse(
-            job.name,
-            () => `${snapshot.title} · ${URL.parse(snapshot.url)?.host ?? snapshot.url}`,
-          );
+          const name = Option.getOrElse(job.name, () => defaultName(snapshot.title, snapshot.url));
 
           const warned = Object.entries(snapshot.warnings).filter(([, count]) => count > 0);
 

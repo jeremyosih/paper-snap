@@ -54613,7 +54613,7 @@ const NodeInfo = fromJsonString(Struct({
 const layer = succeed$3(Service, Service.of({ connect: fn("Paper.connect")(function* (settings) {
 	const client = new Client({
 		name: "paper-snapshot",
-		version: "0.1.4"
+		version: "0.1.5"
 	});
 	yield* acquireRelease(tryPromise({
 		try: () => client.connect(new StdioClientTransport({
@@ -55070,6 +55070,13 @@ const target = (job, input, name, layout) => {
 		position
 	});
 };
+/** "Title · host"; a page titled only with its host is named by its URL instead. */
+const defaultName = (title, url) => {
+	const parsed = URL.parse(url);
+	if (parsed === null) return title;
+	const path = parsed.pathname === "/" ? "" : parsed.pathname.replace(/\/$/, "");
+	return title === "" || title === parsed.host ? `${parsed.host}${path}` : `${title} · ${parsed.host}`;
+};
 const slug = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "snapshot";
 const handler = fn("paper-snapshot")(function* (input) {
 	const fs = yield* FileSystem;
@@ -55155,7 +55162,7 @@ const handler = fn("paper-snapshot")(function* (input) {
 			captureTimeout: millis(input.captureTimeout)
 		});
 	})).pipe(flatMap$1((snapshot) => gen(function* () {
-		const name = getOrElse(job.name, () => `${snapshot.title} · ${URL.parse(snapshot.url)?.host ?? snapshot.url}`);
+		const name = getOrElse(job.name, () => defaultName(snapshot.title, snapshot.url));
 		const warned = Object.entries(snapshot.warnings).filter(([, count]) => count > 0);
 		if (warned.length > 0) yield* logWarning(`${name}: ${warned.map(([kind, count]) => `${count} ${kind}`).join(", ")}`);
 		const out = map$9(input.out, (location) => batch ? path.join(location, `${job.index + 1}-${slug(name)}.html`) : location);
@@ -55280,7 +55287,7 @@ const LoggerLive = layer$4([make$6((options) => {
 	process.stderr.write(`${mark} ${text}\n`);
 })]);
 const MainLive = mergeAll(layer$2, layer$1.pipe(provide$2(layer$3)), layer).pipe(provideMerge(layer$5), provideMerge(LoggerLive));
-run$1(command, { version: "0.1.4" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
+run$1(command, { version: "0.1.5" }).pipe(tapError((error) => isCliError(error) ? void_ : error$1(`paper-snapshot: ${error.message}`)), tapDefect((defect) => error$1(`paper-snapshot: unexpected error: ${defect instanceof Error ? defect.stack ?? defect.message : String(defect)}`)), provide(MainLive), runMain({
 	disableErrorReporting: true,
 	teardown: (exit, onExit) => defaultTeardown(exit, (code) => {
 		onExit(code);

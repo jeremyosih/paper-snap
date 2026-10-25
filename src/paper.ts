@@ -126,7 +126,7 @@ export const layer = Layer.succeed(
   Service,
   Service.of({
     connect: Effect.fn("Paper.connect")(function* (settings: Settings) {
-      const client = new Client({ name: "paper-snapshot", version: "0.1.4" });
+      const client = new Client({ name: "paper-snapshot", version: "0.1.5" });
       yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: () =>
