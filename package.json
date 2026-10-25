@@ -38,16 +38,16 @@
     "setup": "effect-tsgo patch && vp config"
   },
   "dependencies": {
-    "@effect/platform-node": "4.0.0-rc.112",
-    "@modelcontextprotocol/sdk": "1.32.2",
-    "effect": "4.0.0-rc.112",
-    "fflate": "0.8.2",
     "playwright-core": "1.64.1"
   },
   "devDependencies": {
+    "@effect/platform-node": "4.0.0-rc.112",
     "@effect/tsgo": "0.41.0",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "@oxlint/plugins": "1.82.0",
     "@types/node": "^26.2.0",
+    "effect": "4.0.0-rc.112",
+    "fflate": "0.8.2",
     "knip": "6.34.0",
     "oxlint": "1.82.0",
     "typescript": "7.0.2",
